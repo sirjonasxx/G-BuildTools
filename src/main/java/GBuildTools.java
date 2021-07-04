@@ -1,5 +1,4 @@
 import gearth.Main;
-import gearth.extensions.Extension;
 import gearth.extensions.ExtensionForm;
 import gearth.extensions.ExtensionFormLauncher;
 import gearth.extensions.ExtensionInfo;
@@ -47,8 +46,6 @@ public class GBuildTools extends ExtensionForm {
     public CheckBox override_rotation_cbx;
     public Spinner override_rotation_spinner;
 
-
-    private HClient client = null;
     private final static int RATELIMIT = 530;
     private PacketInfoSupport packetInfoSupport = null;
 
@@ -97,19 +94,13 @@ public class GBuildTools extends ExtensionForm {
             }
 
             if (delayedDrop != null) {
-                if (client == HClient.FLASH) {
-                    String packetString = String.format("-%d %d %d %d",
-                            delayedDrop.getFurniId(),
-                            delayedDrop.getX(),
-                            delayedDrop.getY(),
-                            delayedDrop.getRotation()
-                    );
-                    packetInfoSupport.sendToServer("PlaceObject", packetString);
-                }
-                else {
-//                    packetInfoSupport.sendToServer("PlaceRoomItem", -delayedDrop.getFurniId(), delayedDrop.getX(), delayedDrop.getY(), delayedDrop.getRotation());
-                }
-
+                String packetString = String.format("-%d %d %d %d",
+                        delayedDrop.getFurniId(),
+                        delayedDrop.getX(),
+                        delayedDrop.getY(),
+                        delayedDrop.getRotation()
+                );
+                packetInfoSupport.sendToServer("PlaceObject", packetString);
 
                 delayedDrop.setDropTimeStamp(System.currentTimeMillis());
                 synchronized (awaitDropConfirmation) {
@@ -132,12 +123,7 @@ public class GBuildTools extends ExtensionForm {
         packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "RoomReady", m -> reset());
 
         packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "PlaceObject", this::onFloorFurniPlaceFlash);
-//        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "PlaceRoomItem", this::onFloorFurniPlaceUnity);
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "FurniListRemove", this::furniMaybePlaced); // flash
-//        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "InventoryRemoveFurni", this::furniMaybePlaced); // unity
-
-
-        onConnect((s, i, s1, s2, hClient, packetInfoManager) -> client = hClient);
+        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "FurniListRemove", this::inventoryFurniRemove); // flash
     }
 
     @Override
@@ -155,9 +141,8 @@ public class GBuildTools extends ExtensionForm {
     }
 
 
-    private void furniMaybePlaced(HMessage hMessage) {
+    private void inventoryFurniRemove(HMessage hMessage) {
         HPacket packet = hMessage.getPacket();
-//        long furniId = client == HClient.FLASH ? packet.readInteger() : packet.readLong();
         long furniId = packet.readInteger();
 
         synchronized (awaitDropConfirmation) {
@@ -166,18 +151,10 @@ public class GBuildTools extends ExtensionForm {
                     // is floor furni
                     hMessage.setBlocked(true); //packet was already
 
-                    new Thread(() -> {
-                        Utils.sleep(10);
-                        FloorFurniDropInfo dropInfo = awaitDropConfirmation.remove(furniId);
-                        if (client == HClient.FLASH) {
-                            packetInfoSupport.sendToClient("ObjectRemove",
-                                    dropInfo.getTempFurniId() + "", false, 0, 0);
-                        }
-                        else {
-//                            packetInfoSupport.sendToClient("ActiveObjectRemove",
-//                                    dropInfo.getTempFurniId(), false, 1L, 0); // first 0 should be long
-                        }
-                    }).start();
+                    FloorFurniDropInfo dropInfo = awaitDropConfirmation.remove(furniId);
+                    packetInfoSupport.sendToClient("ObjectRemove",
+                            dropInfo.getTempFurniId() + "", false, 0, 0);
+
 
                 }
                 else {
@@ -228,26 +205,11 @@ public class GBuildTools extends ExtensionForm {
             delayedFurniDrop.add(dropInfo);
         }
 
-        if (client == HClient.FLASH) {
-            packetInfoSupport.sendToClient("ObjectAdd", (int) dropInfo.getTempFurniId(),
-                    0, dropInfo.getX(), dropInfo.getY(), dropInfo.getRotation(), "0.0", "0.0", 0, 0, "", -1, 0, 0, "");
-        }
-        else {
-//            // {in:ActiveObjectAdd}{s:""}{i:32767}{s:""}{i:5313}{i:7}{i:7}{i:0}{s:""}{i:16256}{i:0}{i:0}{i:0}{s:""}{s:"0"}{i:-1}{i:1}{l:12451012}{s:"jonas1234"}
-//            HPacket packet = new HPacket(String.format("{in:ActiveObjectAdd}{l:%d}{i:5313}{i:%d}{i:%d}{i:%d}{s:\"\"}{i:16256}{i:0}{i:0}{i:0}{s:\"\"}{s:\"0\"}{i:-1}{i:1}{l:1}{s:\"g-earth\"}",
-//                    dropInfo.getTempFurniId(), dropInfo.getX(), dropInfo.getY(), dropInfo.getRotation()));
-//            sendToClient(packet);
-        }
+        packetInfoSupport.sendToClient("ObjectAdd", (int) dropInfo.getTempFurniId(),
+                0, dropInfo.getX(), dropInfo.getY(), dropInfo.getRotation(), "0.0", "0.0", 0, 0, "", -1, 0, 0, "");
 
-        if (client == HClient.FLASH) {
-            int flashFurniId = -(int)dropInfo.getFurniId();
-            packetInfoSupport.sendToClient("FurniListRemove", flashFurniId);
-        }
-        else {
-////            long unityFurniId = -furniId;
-//            int unityFurniId = -(int)dropInfo.getFurniId(); // todo update when sulake fixes -> long
-//            packetInfoSupport.sendToClient("InventoryRemoveFurni", unityFurniId);
-        }
+        int flashFurniId = -(int)dropInfo.getFurniId();
+        packetInfoSupport.sendToClient("FurniListRemove", flashFurniId);
     }
 
 
