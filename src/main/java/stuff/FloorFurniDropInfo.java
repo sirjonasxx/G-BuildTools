@@ -1,8 +1,10 @@
-public class FloorFurniDropInfo {
+package stuff;
+
+public class FloorFurniDropInfo implements DropInfo {
 
     private final long furniId;
     private final long tempFurniId;
-    private final int rotation;
+    private int rotation;
 
     private final int x;
     private final int y;
@@ -43,5 +45,10 @@ public class FloorFurniDropInfo {
 
     public void setDropTimeStamp(long dropTimeStamp) {
         this.dropTimeStamp = dropTimeStamp;
+    }
+
+    // can override
+    public void setRotation(int rotation) {
+        this.rotation = rotation;
     }
 }

@@ -10,7 +10,7 @@
             <Label layoutX="31.0" layoutY="-8.0" style="-fx-background-color: white;" text="Quickdrop furni" />
             <CheckBox fx:id="qd_floor_cbx" layoutX="14.0" layoutY="22.0" mnemonicParsing="false" selected="true" text="Floor furniture" textFill="#000000d7" />
             <CheckBox fx:id="qd_wall_cbx" layoutX="14.0" layoutY="44.0" mnemonicParsing="false" selected="true" text="Wall furniture" textFill="#000000d6" />
-            <CheckBox fx:id="override_rotation_cbx" layoutX="14.0" layoutY="87.0" mnemonicParsing="false" text="Override rotation:" textFill="#000000d6" />
+            <CheckBox fx:id="override_rotation_cbx" layoutX="14.0" layoutY="87.0" mnemonicParsing="false" onAction="#toggleOverrideRotation" text="Override rotation:" textFill="#000000d6" />
 
              <Spinner fx:id="override_rotation_spinner" disable="true" editable="true" layoutX="14.0" layoutY="115.0" prefHeight="25.0" prefWidth="115.0">
                  <valueFactory>
@@ -22,21 +22,21 @@
       <AnchorPane layoutX="14.0" layoutY="198.0" prefHeight="154.0" prefWidth="146.0" style="-fx-border-color: grey; -fx-border-radius: 3px;">
          <children>
             <Label layoutX="29.0" layoutY="-8.0" style="-fx-background-color: white;" text="Wired duplicator" />
-            <RadioButton layoutX="14.0" layoutY="48.0" mnemonicParsing="false" selected="true" text="None" textFill="#000000d6">
+            <RadioButton fx:id="rd_wired_none" layoutX="14.0" layoutY="48.0" mnemonicParsing="false" selected="true" text="None" textFill="#000000d6">
                <toggleGroup>
                   <ToggleGroup fx:id="wired_tgl" />
                </toggleGroup>
             </RadioButton>
-            <RadioButton disable="true" layoutX="14.0" layoutY="73.0" mnemonicParsing="false" text="Last condition" textFill="#000000d6" toggleGroup="$wired_tgl" />
-            <RadioButton disable="true" layoutX="14.0" layoutY="98.0" mnemonicParsing="false" text="Last effect" textFill="#000000d6" toggleGroup="$wired_tgl" />
-            <RadioButton disable="true" layoutX="14.0" layoutY="123.0" mnemonicParsing="false" text="Last trigger" textFill="#000000d6" toggleGroup="$wired_tgl" />
+            <RadioButton fx:id="rd_wired_cond" disable="true" layoutX="14.0" layoutY="73.0" mnemonicParsing="false" text="Last condition" textFill="#000000d6" toggleGroup="$wired_tgl" />
+            <RadioButton fx:id="rd_wired_effect" disable="true" layoutX="14.0" layoutY="98.0" mnemonicParsing="false" text="Last effect" textFill="#000000d6" toggleGroup="$wired_tgl" />
+            <RadioButton fx:id="rd_wired_trig" disable="true" layoutX="14.0" layoutY="123.0" mnemonicParsing="false" text="Last trigger" textFill="#000000d6" toggleGroup="$wired_tgl" />
             <Label layoutX="14.0" layoutY="21.0" text="Duplicate from:" />
          </children>
       </AnchorPane>
       <Hyperlink layoutX="14.0" layoutY="370.0" text="Read the github README usage instructions" />
       <AnchorPane layoutX="183.0" layoutY="14.0" prefHeight="56.0" prefWidth="179.0" style="-fx-border-color: grey; -fx-border-radius: 3px;">
          <children>
-            <Label layoutX="50.0" layoutY="-8.0" style="-fx-background-color: white;" text="Stacktile  tools" />
+            <Label layoutX="53.0" layoutY="-8.0" style="-fx-background-color: white;" text="Stacktile tools" />
             <CheckBox layoutX="12.0" layoutY="9.0" mnemonicParsing="false" prefHeight="49.0" prefWidth="154.0" text="Apply stacktile updates to all stacktiles in room" textFill="#000000d6" wrapText="true" />
          </children>
       </AnchorPane>
@@ -87,8 +87,9 @@
       <AnchorPane layoutX="377.0" layoutY="257.0" prefHeight="96.0" prefWidth="170.0" style="-fx-background-color: #eee;">
          <children>
             <CheckBox fx:id="enable_gbuildtools" layoutX="14.0" layoutY="12.0" mnemonicParsing="false" text="Enable G-BuildTools" />
-            <Label fx:id="room_found_lbl" layoutX="14.0" layoutY="43.0" text="No room found" textFill="RED" />
-            <Label fx:id="stack_tile_lbl" layoutX="14.0" layoutY="68.0" text="No stack tile found" textFill="RED" />
+            <Label fx:id="room_found_lbl" layoutX="14.0" layoutY="40.0" text="No room found" textFill="RED" />
+            <Label fx:id="furnidata_lbl" layoutX="14.0" layoutY="57.0" text="Furnidata not loaded" textFill="RED" />
+            <Label fx:id="stack_tile_lbl" layoutX="14.0" layoutY="74.0" text="No stack tile found" textFill="RED" />
          </children>
       </AnchorPane>
       <CheckBox fx:id="always_on_top_cbx" layoutX="519.0" layoutY="363.0" mnemonicParsing="false" onAction="#toggleAlwaysOnTop" prefHeight="37.0" prefWidth="109.0" text="Always on top" />

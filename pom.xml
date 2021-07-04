@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>gearthextensions</groupId>
-    <artifactId>GFurniDropper</artifactId>
+    <artifactId>GBuildTools</artifactId>
     <packaging>jar</packaging>
     <version>0.1</version>
 
