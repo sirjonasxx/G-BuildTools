@@ -1,3 +1,5 @@
+package extension;
+
 import furnidata.FurniDataTools;
 import gearth.Main;
 import gearth.extensions.ExtensionForm;
@@ -17,6 +19,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
+import room.RoomFurniState;
 import stuff.DropInfo;
 import stuff.FloorFurniDropInfo;
 import stuff.WallFurniDropInfo;
@@ -35,7 +38,7 @@ import java.util.*;
 @ExtensionInfo(
         Title =  "G-BuildTools",
         Description =  "For all your building needs",
-        Version =  "0.1",
+        Version =  "1.0",
         Author =  "sirjonasxx"
 )
 public class GBuildTools extends ExtensionForm {
@@ -62,13 +65,16 @@ public class GBuildTools extends ExtensionForm {
     public RadioButton rd_wired_none;
 
 
-    private final static int RATELIMIT = 530;
+    public CheckBox st_allstacktile_cbx;
+    public CheckBox ift_pizza_cbx;
+
+
+    private final static int RATELIMIT = 525;
+    private final static int FAST_RATELIMIT = 15; // furni movement, stacktile update
     private PacketInfoSupport packetInfoSupport = null;
     private FurniDataTools furniDataTools = null;
 
-    private volatile int[][] heightmap = null; // 256 * 256
-    private volatile List<List<List<HFloorItem>>> furnimap = null;
-    private volatile boolean inRoom = false;
+    private RoomFurniState roomFurniState = null;
 
 
     // quickdrop furni
@@ -87,6 +93,10 @@ public class GBuildTools extends ExtensionForm {
     private final Object wiredLock = new Object();
 
 
+    // stacktile tools
+    private final LinkedList<HFloorItem> delayedStacktileUpdates = new LinkedList<>();
+    private volatile int stacktileheight = -1;
+
 
     public static void main(String[] args) {
         ExtensionFormLauncher.trigger(GBuildTools.class, args);
@@ -97,10 +107,12 @@ public class GBuildTools extends ExtensionForm {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("gbuildtools.fxml"));
         Parent root = loader.load();
 
-        stage.setTitle("G-BuildTools");
+        stage.setTitle("G-BuildTools 1.0");
         stage.setScene(new Scene(root));
         stage.getScene().getStylesheets().add(GEarthController.class.getResource("/gearth/ui/bootstrap3.css").toExternalForm());
         stage.getIcons().add(new Image(Main.class.getResourceAsStream("G-EarthLogoSmaller.png")));
+        stage.setHeight(283);
+        stage.setWidth(544);
 
         stage.setResizable(false);
 
@@ -111,23 +123,26 @@ public class GBuildTools extends ExtensionForm {
     private boolean buildToolsEnabled() {
         return enable_gbuildtools.isSelected();
     }
-
-    private boolean roomAvailable() {
-        return heightmap != null && furnimap != null && inRoom;
-    }
-
-    private boolean furniDataReady() {
+    public boolean furniDataReady() {
         return furniDataTools != null && furniDataTools.isReady();
     }
+    private HFloorItem stackTileLarge() {
+        if (!roomFurniState.inRoom() || !furniDataReady()) return null;
+        List<HFloorItem> items = roomFurniState.getItemsFromType(furniDataTools, "tile_stackmagic2");
+        if (items.size() == 0) return null;
+        return items.get(0);
+    }
 
 
-    private void updateUI() {
+    public void updateUI() {
         Platform.runLater(() -> {
 
-            room_found_lbl.setText(roomAvailable() ? "Room found" : "No room found");
-            room_found_lbl.setTextFill(roomAvailable() ? Paint.valueOf("Green") : Paint.valueOf("Red"));
+            room_found_lbl.setText(roomFurniState.inRoom() ? "Room found" : "No room found");
+            room_found_lbl.setTextFill(roomFurniState.inRoom() ? Paint.valueOf("Green") : Paint.valueOf("Red"));
             furnidata_lbl.setText(furniDataReady() ? "Furnidata loaded" : "Furnidata not loaded");
             furnidata_lbl.setTextFill(furniDataReady() ? Paint.valueOf("Green") : Paint.valueOf("Red"));
+            stack_tile_lbl.setText(stackTileLarge() != null ? "Stack tile found" : "No stack tile found");
+            stack_tile_lbl.setTextFill(stackTileLarge() != null ? Paint.valueOf("Green") : Paint.valueOf("Red"));
 
             // quickdrop furni
             override_rotation_spinner.setDisable(!override_rotation_cbx.isSelected());
@@ -143,6 +158,12 @@ public class GBuildTools extends ExtensionForm {
             rd_wired_trig.setDisable(is_busy || !last_trigger.isPresent());
             rd_wired_none.setDisable(is_busy);
 
+
+
+            // other (temporary comment)
+            st_allstacktile_cbx.setDisable(!furniDataReady());
+            ift_pizza_cbx.setDisable(!furniDataReady());
+
         });
     }
 
@@ -150,20 +171,16 @@ public class GBuildTools extends ExtensionForm {
     protected void initExtension() {
         packetInfoSupport = new PacketInfoSupport(this);
 
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "HeightMap", this::parseHeightmap);
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "HeightMapUpdate", this::heightmapUpdate);
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "Objects", this::parseFloorItems);
+        roomFurniState = new RoomFurniState(packetInfoSupport, o -> updateUI());
 
         packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "CloseConnection", m -> reset());
         packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "Quit", m -> reset());
         packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "RoomReady", m -> reset());
 
-
         // quickdrop furni
         new Thread(this::dropFurniLoop).start();
         packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "PlaceObject", this::onFurniPlace);
         packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "FurniListRemove", this::inventoryFurniRemove); // flash only
-
 
         // wired duplicator
         new Thread(() -> wiredSaveLoop(delayedConditionSave, last_condition)).start();
@@ -175,75 +192,22 @@ public class GBuildTools extends ExtensionForm {
         packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "Open", this::onOpenWired);
 
 
-        packetInfoSupport.sendToServer("GetHeightMap");
+        // Stacktile tools
+        new Thread(this::stackTileLoop).start();
+        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "SetCustomStackingHeight", this::setStackHeight);
 
+
+        roomFurniState.requestRoom(this);
 
 
         onConnect((host, i, s1, s2, hClient) -> {
-            furniDataTools = new FurniDataTools(host, observable -> updateUI());
+            furniDataTools = new FurniDataTools(host, observable -> {
+                updateUI();
+                maybeReplaceTBones();
+            });
         });
     }
 
-
-    private void parseFloorItems(HMessage hMessage) {
-        HFloorItem[] floorItems = HFloorItem.parse(hMessage.getPacket());
-
-        furnimap = new ArrayList<>();
-        for (int i = 0; i < 130; i++) {
-            furnimap.add(new ArrayList<>());
-            for (int j = 0; j < 130; j++) {
-                furnimap.get(i).add(new ArrayList<>());
-            }
-        }
-
-        for (HFloorItem item : floorItems) {
-            furnimap.get(item.getTile().getX()).get(item.getTile().getY()).add(item);
-        }
-
-        for(List<List<HFloorItem>> column : furnimap) {
-            for (List<HFloorItem> floorItemsOnTile : column) {
-                floorItemsOnTile.sort(Comparator.comparingDouble(o -> o.getTile().getZ()));
-            }
-        }
-
-        inRoom = true;
-        updateUI();
-    }
-    private void parseHeightmap(HMessage hMessage) {
-        HPacket packet = hMessage.getPacket();
-
-        int columns = packet.readInteger();
-        int tiles = packet.readInteger();
-        int rows = tiles/columns;
-
-        int[][] heightmap = new int[columns][];
-        for (int col = 0; col < columns; col++) {
-            heightmap[col] = new int[rows];
-        }
-
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < columns; col++) {
-                heightmap[col][row] = packet.readUshort();
-            }
-        }
-
-        this.heightmap = heightmap;
-
-        updateUI();
-    }
-    private void heightmapUpdate(HMessage hMessage) {
-        if (heightmap != null) {
-            HPacket packet = hMessage.getPacket();
-            int updates = packet.readByte();
-
-            for (int i = 0; i < updates; i++) {
-                int x = packet.readByte();
-                int y = packet.readByte();
-                int height = packet.readUshort();
-                heightmap[x][y] = height;
-            }
-        }
-    }
 
     @Override
     protected void onEndConnection() {
@@ -261,16 +225,19 @@ public class GBuildTools extends ExtensionForm {
             delayedFloorFurniDrop.clear();
         }
         synchronized (delayedEffectSave) {
-            delayedFloorFurniDrop.clear();
+            delayedEffectSave.clear();
         }
         synchronized (delayedConditionSave) {
-            delayedFloorFurniDrop.clear();
+            delayedConditionSave.clear();
         }
         synchronized (delayedTriggerSave) {
-            delayedFloorFurniDrop.clear();
+            delayedTriggerSave.clear();
         }
-        inRoom = false;
+        synchronized (delayedStacktileUpdates) {
+            delayedStacktileUpdates.clear();
+        }
 
+        roomFurniState.reset();
         updateUI();
     }
 
@@ -327,7 +294,7 @@ public class GBuildTools extends ExtensionForm {
         }
     }
     private void onFurniPlace(HMessage hMessage) {
-        if (!buildToolsEnabled() || !roomAvailable()) return;
+        if (!buildToolsEnabled() || !roomFurniState.inRoom()) return;
 
         hMessage.setBlocked(true);
 
@@ -364,15 +331,14 @@ public class GBuildTools extends ExtensionForm {
             delayedFloorFurniDrop.add(dropInfo);
         }
 
-        int heightAsInt = heightmap[dropInfo.getX()][dropInfo.getY()];
-        double heightAsDouble = ((double)heightAsInt)/256;
+        double height = roomFurniState.getTileHeight(dropInfo.getX(), dropInfo.getY());
 
         if (override_rotation_cbx.isSelected()) {
             dropInfo.setRotation(override_rotation_spinner.getValue());
         }
 
         packetInfoSupport.sendToClient("ObjectAdd", -(int)dropInfo.getTempFurniId(),
-                0, dropInfo.getX(), dropInfo.getY(), dropInfo.getRotation(), heightAsDouble + "", "0.0", 0, 0, "", -1, 0, 0, "");
+                0, dropInfo.getX(), dropInfo.getY(), dropInfo.getRotation(), height + "", "0.0", 0, 0, "", -1, 0, 0, "");
 
         int flashFurniId = (int)dropInfo.getFurniId();
         packetInfoSupport.sendToClient("FurniListRemove", flashFurniId);
@@ -507,11 +473,85 @@ public class GBuildTools extends ExtensionForm {
     }
 
 
+    // Stack tile tools
+    private void stackTileLoop() {
+        while (true) {
+            HFloorItem stackTile = null;
+            synchronized (delayedStacktileUpdates) {
+                if (delayedStacktileUpdates.size() > 0) {
+                    stackTile = delayedStacktileUpdates.removeFirst();
+                }
+            }
+
+            if (stackTile != null) {
+                packetInfoSupport.sendToServer("SetCustomStackingHeight", stackTile.getId(), stacktileheight);
+                Utils.sleep(FAST_RATELIMIT);
+            }
+            else {
+                Utils.sleep(2);
+            }
+        }
+    }
+    private void setStackHeight(HMessage hMessage) {
+        if (buildToolsEnabled() && st_allstacktile_cbx.isSelected() && furniDataReady() && roomFurniState.inRoom()) {
+            List<HFloorItem> allStackTiles = new ArrayList<>();
+            allStackTiles.addAll(roomFurniState.getItemsFromType(furniDataTools, "tile_stackmagic2"));
+            allStackTiles.addAll(roomFurniState.getItemsFromType(furniDataTools, "tile_stackmagic1"));
+            allStackTiles.addAll(roomFurniState.getItemsFromType(furniDataTools, "tile_stackmagic"));
+
+            if (allStackTiles.size() > 1) {
+                hMessage.setBlocked(true);
+                HPacket packet = hMessage.getPacket();
+
+                packet.readInteger(); // furni id, irrelevant
+                synchronized (delayedStacktileUpdates) {
+                    delayedStacktileUpdates.clear();
+                    delayedStacktileUpdates.addAll(allStackTiles);
+                    stacktileheight = packet.readInteger();
+                }
+            }
+        }
+    }
+
+
+    private void maybeReplaceTBones() {
+        boolean wasEnabled = roomFurniState.getTypeIdMapper().size() > 0;
+        boolean enabled = buildToolsEnabled() && furniDataReady() && ift_pizza_cbx.isSelected();
+
+        if (wasEnabled != enabled) {
+            if (enabled)
+                roomFurniState.addTypeIdMapper(furniDataTools, "petfood4", "pizza");
+            else
+                roomFurniState.removeTypeIdMapper(furniDataTools, "petfood4");
+
+            if (roomFurniState.inRoom()) {
+                roomFurniState.heavyReload(this);
+            }
+        }
+    }
+
     public void toggleAlwaysOnTop(ActionEvent actionEvent) {
         primaryStage.setAlwaysOnTop(always_on_top_cbx.isSelected());
     }
 
     public void toggleOverrideRotation(ActionEvent actionEvent) {
         updateUI();
+    }
+
+
+    public PacketInfoSupport getPacketInfoSupport() {
+        return packetInfoSupport;
+    }
+
+    public FurniDataTools getFurniDataTools() {
+        return furniDataTools;
+    }
+
+    public void enable_tgl(ActionEvent actionEvent) {
+        maybeReplaceTBones();
+    }
+
+    public void tbones_tgl(ActionEvent actionEvent) {
+        maybeReplaceTBones();
     }
 }
