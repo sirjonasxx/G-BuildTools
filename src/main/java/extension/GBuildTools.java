@@ -7,6 +7,7 @@ import gearth.extensions.ExtensionFormLauncher;
 import gearth.extensions.ExtensionInfo;
 import gearth.extensions.extra.tools.PacketInfoSupport;
 import gearth.extensions.parsers.HFloorItem;
+import gearth.extensions.parsers.HPoint;
 import gearth.protocol.HMessage;
 import gearth.protocol.HPacket;
 import gearth.ui.GEarthController;
@@ -20,10 +21,7 @@ import javafx.scene.image.Image;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import room.RoomFurniState;
-import stuff.DropInfo;
-import stuff.FloorFurniDropInfo;
-import stuff.WallFurniDropInfo;
-import stuff.WallFurniInfo;
+import stuff.*;
 import utils.Utils;
 import utils.Wrapper;
 
@@ -64,13 +62,38 @@ public class GBuildTools extends ExtensionForm {
     public RadioButton rd_wired_trig;
     public RadioButton rd_wired_none;
 
-
+    // stack tools
     public CheckBox st_allstacktile_cbx;
+
+    // invisible furni tools
     public CheckBox ift_pizza_cbx;
+
+    // furni mover
+    public CheckBox fm_visualhelp_lbl;
+
+    public RadioButton rd_fm_mode_tile;
+    public RadioButton rd_fm_mode_rect;
+    public RadioButton rd_fm_mode_auto;
+    public CheckBox fm_cbx_inversedir;
+
+    public CheckBox fm_cbx_usestacktile;
+    public RadioButton rd_fm_stack_matchheight;
+    public RadioButton rd_fm_stack_offset;
+    public RadioButton rd_fm_stack_flatten;
+    public Spinner<Double> height_offset_spinner;
+    public Spinner<Double> flatten_height_spinner;
+
+    public CheckBox fm_cbx_rotatefurni;
+    public CheckBox fm_cbx_wiredsafety;
+    public CheckBox fm_cbx_visualhelp;
+
+
 
 
     private final static int RATELIMIT = 525;
-    private final static int FAST_RATELIMIT = 15; // furni movement, stacktile update
+    private final static int FAST_RATELIMIT = 15;
+    private final static int MOVEFURNI_RATELIMIT = 30;
+
     private PacketInfoSupport packetInfoSupport = null;
     private FurniDataTools furniDataTools = null;
 
@@ -96,6 +119,37 @@ public class GBuildTools extends ExtensionForm {
     // stacktile tools
     private final LinkedList<HFloorItem> delayedStacktileUpdates = new LinkedList<>();
     private volatile int stacktileheight = -1;
+
+    // invis furni
+    private volatile long latestTboneReq = -1;
+
+    // furnimover
+    private enum MoveFurniState {
+        NONE,
+        MOVING,
+        UNDOING
+    }
+
+    private enum SelectionState {
+        NONE,
+        AWAIT_SELECTION,
+        AWAIT_SELECTION2,
+        AWAIT_MOVE
+    }
+    private final Object furniMoveLock = new Object();
+
+    private LinkedList<LinkedList<FloorFurniMovement>> moveHistory = new LinkedList<>();
+    private LinkedList<LinkedList<FloorFurniMovement>> workList = new LinkedList<>();
+
+    private volatile MoveFurniState moveFurniState = MoveFurniState.NONE;
+    private volatile SelectionState selectionState = SelectionState.NONE;
+
+    private volatile HPoint sourcePosition = null;
+    private volatile HPoint sourceEndPosition = null;
+    private List<HFloorItem> selection = new ArrayList<>();
+    private volatile HPoint latestStackMove = null;
+
+
 
 
     public static void main(String[] args) {
@@ -136,13 +190,14 @@ public class GBuildTools extends ExtensionForm {
 
     public void updateUI() {
         Platform.runLater(() -> {
+            boolean stackLAvailable = stackTileLarge() != null;
 
             room_found_lbl.setText(roomFurniState.inRoom() ? "Room found" : "No room found");
             room_found_lbl.setTextFill(roomFurniState.inRoom() ? Paint.valueOf("Green") : Paint.valueOf("Red"));
             furnidata_lbl.setText(furniDataReady() ? "Furnidata loaded" : "Furnidata not loaded");
             furnidata_lbl.setTextFill(furniDataReady() ? Paint.valueOf("Green") : Paint.valueOf("Red"));
-            stack_tile_lbl.setText(stackTileLarge() != null ? "Stack tile found" : "No stack tile found");
-            stack_tile_lbl.setTextFill(stackTileLarge() != null ? Paint.valueOf("Green") : Paint.valueOf("Red"));
+            stack_tile_lbl.setText(stackLAvailable ? "Stack tile found" : "No stack tile found");
+            stack_tile_lbl.setTextFill(stackLAvailable ? Paint.valueOf("Green") : Paint.valueOf("Red"));
 
             // quickdrop furni
             override_rotation_spinner.setDisable(!override_rotation_cbx.isSelected());
@@ -159,16 +214,43 @@ public class GBuildTools extends ExtensionForm {
             rd_wired_none.setDisable(is_busy);
 
 
-
-            // other (temporary comment)
+            // stack tools
             st_allstacktile_cbx.setDisable(!furniDataReady());
-            ift_pizza_cbx.setDisable(!furniDataReady());
+
+
+            // invisible furni tools
+            ift_pizza_cbx.setDisable(!furniDataReady() || latestTboneReq > System.currentTimeMillis() - RATELIMIT);
+
+
+            // furni mover
+            fm_cbx_inversedir.setDisable(!rd_fm_mode_rect.isSelected());
+            fm_cbx_usestacktile.setDisable(!stackLAvailable);
+            rd_fm_stack_matchheight.setDisable(!stackLAvailable || !fm_cbx_usestacktile.isSelected());
+            rd_fm_stack_offset.setDisable(!stackLAvailable || !fm_cbx_usestacktile.isSelected());
+            rd_fm_stack_flatten.setDisable(!stackLAvailable || !fm_cbx_usestacktile.isSelected());
+            height_offset_spinner.setDisable(!stackLAvailable || !fm_cbx_usestacktile.isSelected() || !rd_fm_stack_offset.isSelected());
+            flatten_height_spinner.setDisable(!stackLAvailable || !fm_cbx_usestacktile.isSelected() || !rd_fm_stack_flatten.isSelected());
+
+            rd_fm_mode_rect.setDisable(selectionState == SelectionState.AWAIT_SELECTION2 || selectionState == SelectionState.AWAIT_MOVE);
+            rd_fm_mode_auto.setDisable(selectionState == SelectionState.AWAIT_SELECTION2 || selectionState == SelectionState.AWAIT_MOVE);
+            rd_fm_mode_tile.setDisable(selectionState == SelectionState.AWAIT_SELECTION2 || selectionState == SelectionState.AWAIT_MOVE);
 
         });
     }
 
     @Override
     protected void initExtension() {
+        moveHistory.add(new LinkedList<>());
+
+        // javafx spinner updates bugfix
+        Spinner[] spinners = {height_offset_spinner, flatten_height_spinner, override_rotation_spinner};
+        for(Spinner spinner : spinners) {
+            spinner.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                if (!newValue) spinner.increment(0); // won't change value, but will commit editor
+            });
+        }
+
+
         packetInfoSupport = new PacketInfoSupport(this);
 
         roomFurniState = new RoomFurniState(packetInfoSupport, o -> updateUI());
@@ -197,6 +279,12 @@ public class GBuildTools extends ExtensionForm {
         packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "SetCustomStackingHeight", this::setStackHeight);
 
 
+        // furni mover
+        new Thread(this::furniMoveLoop).start();
+        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "Chat", this::onUserChat);
+        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "MoveAvatar", this::onTileClick);
+
+
         roomFurniState.requestRoom(this);
 
 
@@ -207,7 +295,6 @@ public class GBuildTools extends ExtensionForm {
             });
         });
     }
-
 
     @Override
     protected void onEndConnection() {
@@ -235,6 +322,16 @@ public class GBuildTools extends ExtensionForm {
         }
         synchronized (delayedStacktileUpdates) {
             delayedStacktileUpdates.clear();
+        }
+        synchronized (furniMoveLock) {
+            moveHistory.clear();
+            moveHistory.add(new LinkedList<>());
+            workList.clear();
+            moveFurniState = MoveFurniState.NONE;
+            selectionState = SelectionState.NONE;
+            selection.clear();
+            sourcePosition = null;
+            sourceEndPosition = null;
         }
 
         roomFurniState.reset();
@@ -514,8 +611,330 @@ public class GBuildTools extends ExtensionForm {
     }
 
 
+    //todo
+    // * rotations calculations if possible (furnidatatools?)? (math logic differs depending on furni)
+    // * special ground furni -> banzai tiles, rollers, gameover tile, etc (handle first)
+    // * wired safety
+
+    // furnimover
+    private void furniMoverSendInfo(String text) {
+        if (fm_cbx_visualhelp.isSelected()) {
+            packetInfoSupport.sendToClient("Whisper", -1, text, 0, 30, 0, -1);
+        }
+    }
+    private void furniMoveLoop() {
+        while (true) {
+
+            FloorFurniMovement movement = null;
+            synchronized (furniMoveLock) {
+                if (moveFurniState == MoveFurniState.MOVING) {
+                    while (workList.size() > 0 && movement == null) {
+                        LinkedList<FloorFurniMovement> task = workList.getFirst();
+                        if (task.size() == 0) {
+                            workList.removeFirst();
+                            moveHistory.add(new LinkedList<>());
+                            if (!rd_fm_mode_auto.isSelected()) {
+                                furniMoverSendInfo("Finished movements");
+                            }
+                            latestStackMove = null;
+                        }
+                        else {
+                            movement = task.removeFirst();
+                            moveHistory.getLast().add(movement);
+                        }
+                    }
+                    if (movement == null) {
+                        moveFurniState = MoveFurniState.NONE;
+                    }
+                }
+                else if (moveFurniState == MoveFurniState.UNDOING) {
+                    while (moveFurniState == MoveFurniState.UNDOING && movement == null) {
+                        LinkedList<FloorFurniMovement> task = moveHistory.getLast();
+                        if (task.size() == 0) {
+                            furniMoverSendInfo("Undone last furni movements");
+                            moveFurniState = MoveFurniState.NONE;
+                            if (moveHistory.size() > 1) { // always have 1
+                                moveHistory.removeLast();
+                            }
+                            latestStackMove = null;
+                        }
+                        else {
+                            movement = task.removeFirst();
+                        }
+                    }
+                }
+            }
+
+            if (movement != null) {
+                int furniId = movement.getFurniId();
+                int x, y, z, rot;
+                if (moveFurniState == MoveFurniState.UNDOING) {
+                    x = movement.getOldX();
+                    y = movement.getOldY();
+                    z = movement.getOldZ();
+                    rot = movement.getOldRot();
+                }
+                else {
+                    x = movement.getNewX();
+                    y = movement.getNewY();
+                    z = movement.getNewZ();
+                    rot = movement.getNewRot();
+                }
+
+                HFloorItem stackTile = stackTileLarge();
+                if (movement.useStacktile() && stackTile != null) {
+                    int stacktileId = stackTile.getId();
+
+                    if (latestStackMove == null || latestStackMove.getX() != x || latestStackMove.getY() != y) {
+                        packetInfoSupport.sendToServer("MoveObject", stacktileId, x, y, 0);
+                        Utils.sleep(MOVEFURNI_RATELIMIT/2 + 1);
+                        latestStackMove = null;
+                    }
+
+                    if (latestStackMove == null || !latestStackMove.equals(new HPoint(x, y, z))) {
+                        packetInfoSupport.sendToServer("SetCustomStackingHeight", stacktileId, z);
+                        Utils.sleep(MOVEFURNI_RATELIMIT/2 + 1);
+                    }
+                    latestStackMove = new HPoint(x, y, z);
+                }
+
+                packetInfoSupport.sendToServer("MoveObject", furniId, x, y, rot);
+                Utils.sleep(MOVEFURNI_RATELIMIT);
+            }
+            else {
+                Utils.sleep(2);
+            }
+        }
+    }
+    private void onUserChat(HMessage hMessage) {
+        if (!buildToolsEnabled()) return;
+        String message = hMessage.getPacket().readString();
+
+        switch (message) {
+            case ":move":
+            case ":m":
+                hMessage.setBlocked(true);
+                if (rd_fm_mode_rect.isSelected()) {
+                    furniMoverSendInfo("Select the start of the rectangle");
+                } else if (rd_fm_mode_auto.isSelected()) {
+                    furniMoverSendInfo("You can now start moving");
+                } else if (rd_fm_mode_tile.isSelected()) {
+                    furniMoverSendInfo("Select the source tile");
+                }
+
+                selectionState = SelectionState.AWAIT_SELECTION;
+                break;
+            case ":abort":
+            case ":a":
+                hMessage.setBlocked(true);
+                synchronized (furniMoveLock) {
+                    if (moveFurniState == MoveFurniState.UNDOING) {
+                        moveHistory.add(new LinkedList<>());
+                    } else if (moveFurniState == MoveFurniState.MOVING) {
+                        workList.clear();
+                    }
+                    selectionState = SelectionState.NONE;
+                    moveFurniState = MoveFurniState.NONE;
+                    furniMoverSendInfo("Succesfully aborted");
+                }
+                break;
+            case ":undo":
+            case ":u":
+                hMessage.setBlocked(true);
+                synchronized (furniMoveLock) {
+                    workList.clear();
+                    while (moveHistory.size() > 1 && moveHistory.getLast().size() == 0) {
+                        moveHistory.removeLast();
+                    }
+                    if (moveHistory.getLast().size() == 0) {
+                        furniMoverSendInfo("Nothing to undo");
+                        moveFurniState = MoveFurniState.NONE;
+                    } else {
+                        furniMoverSendInfo("Undoing latest movements");
+                        moveFurniState = MoveFurniState.UNDOING;
+                    }
+                }
+                break;
+        }
+
+        updateUI();
+    }
+    private void enqueueSelection(HPoint target) {
+        if (moveFurniState == MoveFurniState.UNDOING) {
+            furniMoverSendInfo("Can not move while undoing previous movements");
+            return;
+        }
+
+        Set<Integer> stacktiles = new HashSet<>();
+        if (furniDataReady()) {
+            stacktiles.add(furniDataTools.getFloorTypeId("tile_stackmagic"));
+            stacktiles.add(furniDataTools.getFloorTypeId("tile_stackmagic1"));
+            stacktiles.add(furniDataTools.getFloorTypeId("tile_stackmagic2"));
+        }
+
+        // convert
+        int xOffset = target.getX() - sourcePosition.getX();
+        int yOffset = target.getY() - sourcePosition.getY();
+
+        List<FloorFurniMovement> floorFurniMovements = new ArrayList<>();
+        for (HFloorItem floorItem : selection) {
+            if (stacktiles.contains(floorItem.getTypeId())) {
+                continue;
+            }
+
+            // todo decide if need to use stacktile with special types of furni
+            int x = floorItem.getTile().getX();
+            int y = floorItem.getTile().getY();
+            int rot = floorItem.getFacing().ordinal();
+
+//            int newRot = fm_cbx_rotatefurni.isSelected() ?
+            // todo new rotation calculation
+
+            int oldZ = (int)(floorItem.getTile().getZ() * 100);
+            int newZ = oldZ;
+            if (rd_fm_stack_flatten.isSelected()) {
+                newZ = (int)(flatten_height_spinner.getValue() * 100);
+            }
+            if (rd_fm_stack_offset.isSelected()) {
+                newZ = ((int)(height_offset_spinner.getValue() * 100)) + oldZ;
+            }
+
+            boolean useStackTile = fm_cbx_usestacktile.isSelected() && stackTileLarge() != null;
+
+            int newX = x+xOffset;
+            int newY = y+yOffset;
+            if (fm_cbx_inversedir.isSelected()) {
+                int xdiff = x - sourcePosition.getX();
+                int ydiff = y - sourcePosition.getY();
+
+                newX += (ydiff-xdiff);
+                newY += (xdiff-ydiff);
+            }
+
+            FloorFurniMovement movement = new FloorFurniMovement(floorItem.getId(),
+                    x, y, rot, newX, newY, rot, oldZ, newZ, useStackTile
+            );
+            floorFurniMovements.add(movement);
+        }
+
+
+        // decide order
+        floorFurniMovements.sort((o1, o2) -> {
+            int maybe1 = Boolean.compare(o1.useStacktile(), o2.useStacktile());
+            if (maybe1 == 0) {
+                int maybe2 = Integer.compare(o1.getOldY(), o2.getOldY());
+                if (maybe2 == 0) {
+                    int maybe3 = Integer.compare(o1.getOldX(), o2.getOldX());
+                    if (maybe3 == 0) {
+                        // todo wired ordering?
+                        return Integer.compare(o1.getOldZ(), o2.getOldZ());
+                    }
+                    return maybe3;
+                }
+                return maybe2;
+            }
+            return maybe1;
+        });
+
+        LinkedList<FloorFurniMovement> queue = new LinkedList<>(floorFurniMovements);
+
+        if (queue.size() > 0) {
+            workList.add(queue);
+            moveFurniState = MoveFurniState.MOVING;
+            furniMoverSendInfo("Enqueued movements");
+        }
+        else {
+            furniMoverSendInfo("No furniture on selected tiles");
+        }
+
+    }
+    private void onTileClick(HMessage hMessage) {
+        if (selectionState != SelectionState.NONE) {
+            synchronized (furniMoveLock) {
+                hMessage.setBlocked(true);
+                HPacket packet = hMessage.getPacket();
+                HPoint point = new HPoint(packet.readInteger(), packet.readInteger());
+
+                if (selectionState == SelectionState.AWAIT_SELECTION) {
+                    sourcePosition = point;
+
+                    if (rd_fm_mode_tile.isSelected() || rd_fm_mode_auto.isSelected()) { // single tile -> move
+//                        if (rd_fm_mode_tile.isSelected()) {
+                            furniMoverSendInfo("Select the target tile");
+//                        }
+                        selectionState = SelectionState.AWAIT_MOVE;
+                    }
+                    else { // rectangle mode
+                        furniMoverSendInfo("Select the end of the rectangle");
+                        selectionState = SelectionState.AWAIT_SELECTION2;
+                    }
+                }
+                else if (selectionState == SelectionState.AWAIT_SELECTION2) {
+                    if (rd_fm_mode_rect.isSelected()) {
+                        furniMoverSendInfo("Select the target tile");
+                        selectionState = SelectionState.AWAIT_MOVE;
+                        sourceEndPosition = point;
+                    }
+                }
+                else if (selectionState == SelectionState.AWAIT_MOVE) {
+
+
+                    if (sourceEndPosition != null) { // rectangle
+                        int x1 = sourcePosition.getX();
+                        int y1 = sourcePosition.getY();
+                        int x2 = sourceEndPosition.getX();
+                        int y2 = sourceEndPosition.getY();
+                        if (x1 > x2) {
+                            int temp = x1;
+                            x1 = x2;
+                            x2 = temp;
+                        }
+                        if (y1 > y2) {
+                            int temp = y1;
+                            y1 = y2;
+                            y2 = temp;
+                        }
+
+                        selection.clear();
+                        for (int x = x1; x <= x2; x++) {
+                            for (int y = y1; y <= y2; y++) {
+                                selection.addAll(roomFurniState.getFurniOnTile(x, y));
+                            }
+                        }
+
+                        sourceEndPosition = null;
+                    }
+                    else { // tile or auto
+                        selection = roomFurniState.getFurniOnTile(sourcePosition.getX(), sourcePosition.getY());
+                    }
+
+                    if (rd_fm_mode_auto.isSelected()) {
+                        selectionState = SelectionState.AWAIT_SELECTION;
+                    }
+                    else {
+                        selectionState = SelectionState.NONE;
+                    }
+
+                    enqueueSelection(point);
+                    sourcePosition = null;
+                }
+            }
+        }
+    }
+    public void onChangeMovementMode(ActionEvent actionEvent) {
+        synchronized (furniMoveLock) {
+            selectionState = SelectionState.NONE;
+            sourcePosition = null;
+            sourceEndPosition = null;
+        }
+        updateUI();
+    }
+
+
+
+
     private void maybeReplaceTBones() {
-        boolean wasEnabled = roomFurniState.getTypeIdMapper().size() > 0;
+        boolean wasEnabled = roomFurniState.hasMappings();
         boolean enabled = buildToolsEnabled() && furniDataReady() && ift_pizza_cbx.isSelected();
 
         if (wasEnabled != enabled) {
@@ -526,6 +945,11 @@ public class GBuildTools extends ExtensionForm {
 
             if (roomFurniState.inRoom()) {
                 roomFurniState.heavyReload(this);
+                latestTboneReq = System.currentTimeMillis();
+                new Thread(() -> {
+                    Utils.sleep(RATELIMIT + 50);
+                    updateUI();
+                }).start();
             }
         }
     }
@@ -549,6 +973,7 @@ public class GBuildTools extends ExtensionForm {
 
     public void enable_tgl(ActionEvent actionEvent) {
         maybeReplaceTBones();
+
     }
 
     public void tbones_tgl(ActionEvent actionEvent) {
