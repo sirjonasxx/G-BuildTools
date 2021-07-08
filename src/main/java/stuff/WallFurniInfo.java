@@ -6,7 +6,8 @@ public class WallFurniInfo {
 
     private long furniId;
 
-    private HPoint point;
+    private int x;
+    private int y;
     private int xOffset;
     private int yOffset;
 
@@ -22,7 +23,8 @@ public class WallFurniInfo {
         String[] infoSplit = info.split(" ");
 
         String[] pointInfo = infoSplit[0].substring(3).split(",");
-        point = new HPoint(Integer.parseInt(pointInfo[0]), Integer.parseInt(pointInfo[1]));
+        x = Integer.parseInt(pointInfo[0]);
+        y = Integer.parseInt(pointInfo[1]);
 
         String[] offsetInfo = infoSplit[1].substring(2).split(",");
         xOffset = Integer.parseInt(offsetInfo[0]);
@@ -31,16 +33,26 @@ public class WallFurniInfo {
         isLeft = infoSplit[2].equals("l");
     }
 
-    public WallFurniInfo(long furniId, HPoint point, int xOffset, int yOffset, boolean isLeft) {
+    public WallFurniInfo(long furniId, int x, int y, int xOffset, int yOffset, boolean isLeft) {
         this.furniId = furniId;
-        this.point = point;
+        this.x = x;
+        this.y = y;
         this.xOffset = xOffset;
         this.yOffset = yOffset;
         this.isLeft = isLeft;
     }
 
+    public WallFurniInfo(WallFurniInfo wallFurniInfo) {
+        this.furniId = wallFurniInfo.getFurniId();
+        this.x = wallFurniInfo.getX();
+        this.y = wallFurniInfo.getY();
+        this.xOffset = wallFurniInfo.getxOffset();
+        this.yOffset = wallFurniInfo.getyOffset();
+        this.isLeft = wallFurniInfo.isLeft;
+    }
+
     public String moveString() {
-        return String.format(":w=%d,%d l=%d,%d %c", point.getX(), point.getY(), xOffset, yOffset, isLeft ? 'l' : 'r');
+        return String.format(":w=%d,%d l=%d,%d %c", x, y, xOffset, yOffset, isLeft ? 'l' : 'r');
     }
 
     public String placeString() {
@@ -56,12 +68,20 @@ public class WallFurniInfo {
         this.furniId = furniId;
     }
 
-    public HPoint getPoint() {
-        return point;
+    public int getX() {
+        return x;
     }
 
-    public void setPoint(HPoint point) {
-        this.point = point;
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
     }
 
     public int getxOffset() {

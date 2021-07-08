@@ -33,7 +33,7 @@
                         <manifest>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                             <addClasspath>true</addClasspath>
-                            <mainClass>GBuildTools</mainClass>
+                            <mainClass>extension/GBuildTools</mainClass>
                             <useUniqueVersions>false</useUniqueVersions>
                             <classpathPrefix>lib/</classpathPrefix>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
@@ -58,7 +58,7 @@
                     <outputDirectory>${project.build.directory}/bin</outputDirectory>
                     <archive>
                         <manifest>
-                            <mainClass>GBuildTools</mainClass>
+                            <mainClass>extension/GBuildTools</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

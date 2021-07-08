@@ -4,7 +4,8 @@ import gearth.extensions.extra.tools.PacketInfoSupport;
 
 public class FloorFurniMovement {
 
-    private final int furniId;
+    private final int typeId;
+    private int furniId;
 
     private final int oldX;
     private final int oldY;
@@ -18,7 +19,8 @@ public class FloorFurniMovement {
 
     private final boolean useStacktile;
 
-    public FloorFurniMovement(int furniId, int oldX, int oldY, int oldRot, int newX, int newY, int newRot, int oldZ, int newZ, boolean useStacktile) {
+    public FloorFurniMovement(int typeId, int furniId, int oldX, int oldY, int oldRot, int newX, int newY, int newRot, int oldZ, int newZ, boolean useStacktile) {
+        this.typeId = typeId;
         this.furniId = furniId;
         this.oldX = oldX;
         this.oldY = oldY;
@@ -77,5 +79,13 @@ public class FloorFurniMovement {
 
     public int getNewZ() {
         return newZ;
+    }
+
+    public int getTypeId() {
+        return typeId;
+    }
+
+    public void setFurniId(int furniId) {
+        this.furniId = furniId;
     }
 }

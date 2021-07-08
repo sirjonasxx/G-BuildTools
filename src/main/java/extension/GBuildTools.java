@@ -27,16 +27,10 @@ import utils.Wrapper;
 
 import java.util.*;
 
-// todo heightmap
-// todo req heihtmap on ext onconnect if flash
-// todo override rotation
-// todo wall furni
-
-
 @ExtensionInfo(
         Title =  "G-BuildTools",
         Description =  "For all your building needs",
-        Version =  "1.0",
+        Version =  "1.0-beta",
         Author =  "sirjonasxx"
 )
 public class GBuildTools extends ExtensionForm {
@@ -89,10 +83,27 @@ public class GBuildTools extends ExtensionForm {
 
 
 
+    // poster mover
+    public ToggleGroup pm_loc_tgl;
+    public ToggleGroup pm_loc_offset;
+    public Label pm_furni_lbl;
 
-    private final static int RATELIMIT = 525;
-    private final static int FAST_RATELIMIT = 15;
-    private final static int MOVEFURNI_RATELIMIT = 30;
+    public TextField pm_location_txt;
+    public RadioButton pm_rd_left;
+    public RadioButton pm_rd_right;
+    public Button pm_loc_up_btn;
+    public Button pm_loc_right_btn;
+    public Button pm_loc_down_btn;
+    public Button pm_loc_left_btn;
+    public Button pm_offset_up_btn;
+    public Button pm_offset_right_btn;
+    public Button pm_offset_down_btn;
+    public Button pm_offset_left_btn;
+
+
+    private volatile int RATELIMIT = 525;
+    private volatile int STACKTILE_RATELIMIT = 15;
+    private volatile int MOVEFURNI_RATELIMIT = 30;
 
     private PacketInfoSupport packetInfoSupport = null;
     private FurniDataTools furniDataTools = null;
@@ -110,9 +121,9 @@ public class GBuildTools extends ExtensionForm {
     private final Wrapper<HPacket> last_condition = new Wrapper<>();
     private final Wrapper<HPacket> last_effect = new Wrapper<>();
     private final Wrapper<HPacket> last_trigger = new Wrapper<>();
-    private final LinkedList<Long> delayedConditionSave = new LinkedList<>();
-    private final LinkedList<Long> delayedEffectSave = new LinkedList<>();
-    private final LinkedList<Long> delayedTriggerSave = new LinkedList<>();
+    private final LinkedList<Integer> delayedConditionSave = new LinkedList<>();
+    private final LinkedList<Integer> delayedEffectSave = new LinkedList<>();
+    private final LinkedList<Integer> delayedTriggerSave = new LinkedList<>();
     private final Object wiredLock = new Object();
 
 
@@ -122,6 +133,19 @@ public class GBuildTools extends ExtensionForm {
 
     // invis furni
     private volatile long latestTboneReq = -1;
+
+
+
+    public void onRotatedFurniClick(ActionEvent actionEvent) {
+        fm_cbx_rotatefurni.setSelected(false);
+        fm_cbx_rotatefurni.setDisable(true);
+        furniMoverSendInfo("Couldn't implement this feature because Sulake didn't implement rotations correctly");
+    }
+
+    public void reload_inv(ActionEvent actionEvent) {
+        packetInfoSupport.sendToServer("RequestFurniInventory");
+    }
+
 
     // furnimover
     private enum MoveFurniState {
@@ -136,6 +160,12 @@ public class GBuildTools extends ExtensionForm {
         AWAIT_SELECTION2,
         AWAIT_MOVE
     }
+
+    private enum ExcludeFurniState {
+        NONE,
+        EXCLUDE,
+        INCLUDE
+    }
     private final Object furniMoveLock = new Object();
 
     private LinkedList<LinkedList<FloorFurniMovement>> moveHistory = new LinkedList<>();
@@ -149,7 +179,13 @@ public class GBuildTools extends ExtensionForm {
     private List<HFloorItem> selection = new ArrayList<>();
     private volatile HPoint latestStackMove = null;
 
+    private volatile Set<String> excludedFurnis = new HashSet<>();
+    private volatile ExcludeFurniState excludeFurniState = ExcludeFurniState.NONE;
 
+
+    // poster mover
+    private volatile WallFurniInfo latestWallFurniMovement = null;
+    private volatile boolean updateLocationStringUI = false;
 
 
     public static void main(String[] args) {
@@ -235,6 +271,36 @@ public class GBuildTools extends ExtensionForm {
             rd_fm_mode_auto.setDisable(selectionState == SelectionState.AWAIT_SELECTION2 || selectionState == SelectionState.AWAIT_MOVE);
             rd_fm_mode_tile.setDisable(selectionState == SelectionState.AWAIT_SELECTION2 || selectionState == SelectionState.AWAIT_MOVE);
 
+
+            // poster mover
+            pm_location_txt.setDisable(latestWallFurniMovement == null || !buildToolsEnabled());
+            pm_rd_left.setDisable(latestWallFurniMovement == null || !buildToolsEnabled());
+            pm_rd_right.setDisable(latestWallFurniMovement == null || !buildToolsEnabled());
+            pm_loc_up_btn.setDisable(latestWallFurniMovement == null || !buildToolsEnabled());
+            pm_loc_right_btn.setDisable(latestWallFurniMovement == null || !buildToolsEnabled());
+            pm_loc_down_btn.setDisable(latestWallFurniMovement == null || !buildToolsEnabled());
+            pm_loc_left_btn.setDisable(latestWallFurniMovement == null || !buildToolsEnabled());
+            pm_offset_up_btn.setDisable(latestWallFurniMovement == null || !buildToolsEnabled());
+            pm_offset_right_btn.setDisable(latestWallFurniMovement == null || !buildToolsEnabled());
+            pm_offset_down_btn.setDisable(latestWallFurniMovement == null || !buildToolsEnabled());
+            pm_offset_left_btn.setDisable(latestWallFurniMovement == null || !buildToolsEnabled());
+
+            String poster_lbl = latestWallFurniMovement == null ? "None" : latestWallFurniMovement.getFurniId()+"";
+            pm_furni_lbl.setText(poster_lbl);
+
+            if (updateLocationStringUI) {
+                updateLocationStringUI = false;
+                pm_location_txt.setText(
+                        latestWallFurniMovement == null ? "" :
+                        latestWallFurniMovement.moveString()
+                );
+            }
+
+            if (latestWallFurniMovement != null) {
+                pm_rd_left.setSelected(latestWallFurniMovement.isLeft());
+                pm_rd_right.setSelected(!latestWallFurniMovement.isLeft());
+            }
+
         });
     }
 
@@ -283,7 +349,13 @@ public class GBuildTools extends ExtensionForm {
         new Thread(this::furniMoveLoop).start();
         packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "Chat", this::onUserChat);
         packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "MoveAvatar", this::onTileClick);
+        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "MoveObject", this::onMoveFurni);
 
+
+        // poster mover
+        // {out:MoveWallItem}{i:10616766}{s:":w=0,5 l=4,29 l"}
+        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "MoveWallItem", this::onMoveWallItem);
+        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "ItemUpdate", this::posterMoved);
 
         roomFurniState.requestRoom(this);
 
@@ -332,8 +404,10 @@ public class GBuildTools extends ExtensionForm {
             selection.clear();
             sourcePosition = null;
             sourceEndPosition = null;
+            excludeFurniState = null;
         }
-
+        latestWallFurniMovement = null;
+        updateLocationStringUI = true;
         roomFurniState.reset();
         updateUI();
     }
@@ -445,7 +519,7 @@ public class GBuildTools extends ExtensionForm {
             delayedWallFurniDrop.add(dropInfo);
         }
 
-        WallFurniInfo temp = new WallFurniInfo(dropInfo.getTempFurniId(), dropInfo.getPoint(),
+        WallFurniInfo temp = new WallFurniInfo(dropInfo.getTempFurniId(), dropInfo.getX(), dropInfo.getY(),
                 dropInfo.getxOffset(), dropInfo.getyOffset(), dropInfo.isLeft()
         );
 
@@ -519,9 +593,9 @@ public class GBuildTools extends ExtensionForm {
         last_effect.set(hMessage.getPacket());
         updateUI();
     }
-    private void wiredSaveLoop(LinkedList<Long> delayedWiredSave, Wrapper<HPacket> packet) {
+    private void wiredSaveLoop(LinkedList<Integer> delayedWiredSave, Wrapper<HPacket> packet) {
         while (true) {
-            long wiredId = -1;
+            int wiredId = -1;
             synchronized (wiredLock) {
                 if (delayedWiredSave.size() > 0) {
                     wiredId = delayedWiredSave.removeFirst();
@@ -530,7 +604,7 @@ public class GBuildTools extends ExtensionForm {
 
             if (wiredId != -1) {
                 HPacket saveWired = packet.get();
-                saveWired.replaceInt(6, (int)wiredId);
+                saveWired.replaceInt(6, wiredId);
 
                 sendToServer(saveWired);
 
@@ -546,26 +620,34 @@ public class GBuildTools extends ExtensionForm {
     private void onOpenWired(HMessage hMessage) {
         if (!buildToolsEnabled()) return;
 
-        long furniId = hMessage.getPacket().readInteger();
+        int furniId = hMessage.getPacket().readInteger();
+        String className =
+                (!furniDataReady() || !roomFurniState.inRoom() || roomFurniState.furniFromId(furniId) == null) ? null :
+                        furniDataTools.getFloorItemName(roomFurniState.furniFromId(furniId).getTypeId());
+
         if (rd_wired_trig.isSelected()) {
             synchronized (wiredLock) {
-                delayedTriggerSave.add(furniId);
+                if (className == null || className.startsWith("wf_trg_")) {
+                    hMessage.setBlocked(true);
+                    delayedTriggerSave.add(furniId);
+                }
             }
         }
         else if (rd_wired_cond.isSelected()) {
             synchronized (wiredLock) {
-                delayedConditionSave.add(furniId);
+                if (className == null || className.startsWith("wf_cnd_")) {
+                    hMessage.setBlocked(true);
+                    delayedConditionSave.add(furniId);
+                }
             }
         }
         else if (rd_wired_effect.isSelected()) {
             synchronized (wiredLock) {
-                delayedEffectSave.add(furniId);
+                if (className == null || className.startsWith("wf_act_")) {
+                    hMessage.setBlocked(true);
+                    delayedEffectSave.add(furniId);
+                }
             }
-        }
-
-        if (!rd_wired_none.isSelected()) {
-            hMessage.setBlocked(true);
-            updateUI();
         }
     }
 
@@ -582,7 +664,7 @@ public class GBuildTools extends ExtensionForm {
 
             if (stackTile != null) {
                 packetInfoSupport.sendToServer("SetCustomStackingHeight", stackTile.getId(), stacktileheight);
-                Utils.sleep(FAST_RATELIMIT);
+                Utils.sleep(STACKTILE_RATELIMIT);
             }
             else {
                 Utils.sleep(2);
@@ -612,9 +694,7 @@ public class GBuildTools extends ExtensionForm {
 
 
     //todo
-    // * rotations calculations if possible (furnidatatools?)? (math logic differs depending on furni)
-    // * special ground furni -> banzai tiles, rollers, gameover tile, etc (handle first)
-    // * wired safety
+    // * exclude furni & include furni & reset
 
     // furnimover
     private void furniMoverSendInfo(String text) {
@@ -714,6 +794,11 @@ public class GBuildTools extends ExtensionForm {
             case ":move":
             case ":m":
                 hMessage.setBlocked(true);
+                if (!furniDataReady()) {
+                    furniMoverSendInfo("Wait until furnidata is parsed");
+                    return;
+                }
+
                 if (rd_fm_mode_rect.isSelected()) {
                     furniMoverSendInfo("Select the start of the rectangle");
                 } else if (rd_fm_mode_auto.isSelected()) {
@@ -726,6 +811,7 @@ public class GBuildTools extends ExtensionForm {
                 break;
             case ":abort":
             case ":a":
+                excludeFurniState = ExcludeFurniState.NONE;
                 hMessage.setBlocked(true);
                 synchronized (furniMoveLock) {
                     if (moveFurniState == MoveFurniState.UNDOING) {
@@ -755,6 +841,33 @@ public class GBuildTools extends ExtensionForm {
                     }
                 }
                 break;
+            case ":exclude":
+            case ":e":
+                hMessage.setBlocked(true);
+                if (!furniDataReady() || !roomFurniState.inRoom() ) {
+                    furniMoverSendInfo("Wait until furnidata is parsed and room is loaded");
+                    return;
+                }
+                excludeFurniState = ExcludeFurniState.EXCLUDE;
+                furniMoverSendInfo("SHIFT+CLICK the furni you want to exclude");
+                break;
+            case ":include":
+            case ":i":
+                hMessage.setBlocked(true);
+                if (!furniDataReady() || !roomFurniState.inRoom() ) {
+                    furniMoverSendInfo("Wait until furnidata is parsed and room is loaded");
+                    return;
+                }
+                excludeFurniState = ExcludeFurniState.INCLUDE;
+                furniMoverSendInfo("SHIFT+CLICK the furni you want to include");
+                break;
+            case ":reset":
+            case ":r":
+                hMessage.setBlocked(true);
+                excludedFurnis.clear();
+                furniMoverSendInfo("Cleared list of excluded furniture");
+                excludeFurniState = ExcludeFurniState.NONE;
+                break;
         }
 
         updateUI();
@@ -782,13 +895,16 @@ public class GBuildTools extends ExtensionForm {
                 continue;
             }
 
-            // todo decide if need to use stacktile with special types of furni
+            String classname = furniDataTools.getFloorItemName(floorItem.getTypeId());
+            if (excludedFurnis.contains(classname)) {
+                continue;
+            }
+
             int x = floorItem.getTile().getX();
             int y = floorItem.getTile().getY();
             int rot = floorItem.getFacing().ordinal();
 
-//            int newRot = fm_cbx_rotatefurni.isSelected() ?
-            // todo new rotation calculation
+            // dont implement new rotation
 
             int oldZ = (int)(floorItem.getTile().getZ() * 100);
             int newZ = oldZ;
@@ -799,7 +915,9 @@ public class GBuildTools extends ExtensionForm {
                 newZ = ((int)(height_offset_spinner.getValue() * 100)) + oldZ;
             }
 
-            boolean useStackTile = fm_cbx_usestacktile.isSelected() && stackTileLarge() != null;
+            boolean useStackTile = fm_cbx_usestacktile.isSelected()
+                    && stackTileLarge() != null &&
+                    furniDataTools.isStackable(classname);
 
             int newX = x+xOffset;
             int newY = y+yOffset;
@@ -811,7 +929,7 @@ public class GBuildTools extends ExtensionForm {
                 newY += (xdiff-ydiff);
             }
 
-            FloorFurniMovement movement = new FloorFurniMovement(floorItem.getId(),
+            FloorFurniMovement movement = new FloorFurniMovement(floorItem.getTypeId(), floorItem.getId(),
                     x, y, rot, newX, newY, rot, oldZ, newZ, useStackTile
             );
             floorFurniMovements.add(movement);
@@ -835,6 +953,59 @@ public class GBuildTools extends ExtensionForm {
             }
             return maybe1;
         });
+
+        if (fm_cbx_wiredsafety.isSelected()) {
+            int prevX = -1;
+            int prevY = -1;
+
+            LinkedList<FloorFurniMovement> effects = new LinkedList<>();
+            LinkedList<FloorFurniMovement> conditions = new LinkedList<>();
+            LinkedList<FloorFurniMovement> triggers = new LinkedList<>();
+
+            List<FloorFurniMovement> wireds = new ArrayList<>();
+            for (FloorFurniMovement movement : floorFurniMovements) {
+                if (movement.getOldX() != prevX || movement.getOldY() != prevY) {
+
+                    Map<FloorFurniMovement, Integer> newFurniId = new HashMap<>();
+                    for (FloorFurniMovement floorFurniMovement : wireds) {
+                        FloorFurniMovement curr = effects.size() > 0 ? effects.removeFirst() :
+                                conditions.size() > 0 ? conditions.removeFirst() : triggers.removeFirst();
+                        newFurniId.put(floorFurniMovement, curr.getFurniId());
+                    }
+                    for (FloorFurniMovement mov : newFurniId.keySet()) mov.setFurniId(newFurniId.get(mov));
+
+
+                    effects.clear();
+                    conditions.clear();
+                    triggers.clear();
+                    wireds.clear();
+
+                    prevX = movement.getOldX();
+                    prevY = movement.getOldY();
+                }
+
+                if (furniDataTools.getFloorItemName(movement.getTypeId()).startsWith("wf_trg_")) {
+                    triggers.add(movement);
+                    wireds.add(movement);
+                }
+                else if (furniDataTools.getFloorItemName(movement.getTypeId()).startsWith("wf_cnd_")) {
+                    conditions.add(movement);
+                    wireds.add(movement);
+                }
+                else if (furniDataTools.getFloorItemName(movement.getTypeId()).startsWith("wf_act_")) {
+                    effects.add(movement);
+                    wireds.add(movement);
+                }
+            }
+
+            Map<FloorFurniMovement, Integer> newFurniId = new HashMap<>();
+            for (FloorFurniMovement floorFurniMovement : wireds) {
+                FloorFurniMovement curr = effects.size() > 0 ? effects.removeFirst() :
+                        conditions.size() > 0 ? conditions.removeFirst() : triggers.removeFirst();
+                newFurniId.put(floorFurniMovement, curr.getFurniId());
+            }
+            for (FloorFurniMovement mov : newFurniId.keySet()) mov.setFurniId(newFurniId.get(mov));
+        }
 
         LinkedList<FloorFurniMovement> queue = new LinkedList<>(floorFurniMovements);
 
@@ -929,8 +1100,69 @@ public class GBuildTools extends ExtensionForm {
         }
         updateUI();
     }
+    private void onMoveFurni(HMessage hMessage) {
+        if (furniDataReady() && roomFurniState.inRoom() && excludeFurniState != ExcludeFurniState.NONE) {
+            hMessage.setBlocked(true);
+
+            int furniId = hMessage.getPacket().readInteger();
+            HFloorItem floorItem = roomFurniState.furniFromId(furniId);
+            if (floorItem != null) {
+                String furniName = furniDataTools.getFloorItemName(floorItem.getTypeId());
+                if (excludeFurniState == ExcludeFurniState.EXCLUDE) {
+                    if (excludedFurnis.contains(furniName)) {
+                        furniMoverSendInfo(String.format("\"%s\" was already excluded from being moved", furniName));
+                    }
+                    else {
+                        excludedFurnis.add(furniName);
+                        furniMoverSendInfo(String.format("Succesfully excluded \"%s\" from being moved", furniName));
+                    }
+                }
+                else if (excludeFurniState == ExcludeFurniState.INCLUDE) {
+                    if (excludedFurnis.contains(furniName)) {
+                        excludedFurnis.remove(furniName);
+                        furniMoverSendInfo(String.format("Succesfully included \"%s\" again", furniName));
+                    }
+                    else {
+                        furniMoverSendInfo(String.format("\"%s\" was not excluded", furniName));
+                    }
+                }
+            }
+            else {
+                furniMoverSendInfo("Shouldn't happen");
+            }
+            excludeFurniState = ExcludeFurniState.NONE;
+        }
+    }
 
 
+
+    // poster mover
+    private void onMoveWallItem(HMessage hMessage) {
+        int id = hMessage.getPacket().readInteger();
+        latestWallFurniMovement = new WallFurniInfo(id, hMessage.getPacket().readString());
+        updateLocationStringUI = true;
+
+        updateUI();
+    }
+    private void posterMoved(HMessage hMessage) {
+        HPacket packet = hMessage.getPacket();
+
+        if (latestWallFurniMovement != null) {
+            String id = packet.readString();
+            long wallFurniId = latestWallFurniMovement.getFurniId();
+            if (id.equals(wallFurniId+"")) {
+                packet.readInteger();
+                String posterLocationString = packet.readString();
+                latestWallFurniMovement = new WallFurniInfo(wallFurniId, posterLocationString);
+                updateLocationStringUI = true;
+
+                updateUI();
+            }
+        }
+    }
+    private void movePoster(WallFurniInfo newWallFurniInfo) {
+        packetInfoSupport.sendToServer("MoveWallItem", (int)(newWallFurniInfo.getFurniId()), newWallFurniInfo.moveString());
+    }
 
 
     private void maybeReplaceTBones() {
@@ -973,10 +1205,111 @@ public class GBuildTools extends ExtensionForm {
 
     public void enable_tgl(ActionEvent actionEvent) {
         maybeReplaceTBones();
-
+        updateUI();
     }
 
     public void tbones_tgl(ActionEvent actionEvent) {
         maybeReplaceTBones();
+    }
+
+
+
+
+//    private final static int RATELIMIT = 525;
+//    private final static int STACKTILE_RATELIMIT = 15;
+//    private final static int MOVEFURNI_RATELIMIT = 30;
+
+    public void rtlmt_medium(ActionEvent actionEvent) {
+        RATELIMIT = 535;
+        STACKTILE_RATELIMIT = 23;
+        MOVEFURNI_RATELIMIT = 47;
+    }
+    public void rtlmt_fast(ActionEvent actionEvent) {
+        RATELIMIT = 525;
+        STACKTILE_RATELIMIT = 15;
+        MOVEFURNI_RATELIMIT = 30;
+    }
+    public void rtlmt_slow(ActionEvent actionEvent) {
+        RATELIMIT = 545;
+        STACKTILE_RATELIMIT = 30;
+        MOVEFURNI_RATELIMIT = 45;
+    }
+
+
+
+    private int locSteps() {
+        return Integer.parseInt(((RadioButton)(pm_loc_tgl.getSelectedToggle())).getText());
+    }
+    private int offsetSteps() {
+        return Integer.parseInt(((RadioButton)(pm_loc_offset.getSelectedToggle())).getText());
+    }
+
+    public void pm_loc_up_click(ActionEvent actionEvent) {
+        WallFurniInfo f = new WallFurniInfo(latestWallFurniMovement);
+        f.setY(f.getY() - locSteps());
+        movePoster(f);
+    }
+
+    public void pm_loc_right_click(ActionEvent actionEvent) {
+        WallFurniInfo f = new WallFurniInfo(latestWallFurniMovement);
+        f.setX(f.getX() + locSteps());
+        movePoster(f);
+    }
+
+    public void pm_loc_down_click(ActionEvent actionEvent) {
+        WallFurniInfo f = new WallFurniInfo(latestWallFurniMovement);
+        f.setY(f.getY() + locSteps());
+        movePoster(f);
+    }
+
+    public void pm_loc_left_btn_click(ActionEvent actionEvent) {
+        WallFurniInfo f = new WallFurniInfo(latestWallFurniMovement);
+        f.setX(f.getX() - locSteps());
+        movePoster(f);
+    }
+
+    public void pm_offset_up_click(ActionEvent actionEvent) {
+        WallFurniInfo f = new WallFurniInfo(latestWallFurniMovement);
+        f.setyOffset(f.getyOffset() - offsetSteps());
+        movePoster(f);
+    }
+
+    public void pm_offset_right_click(ActionEvent actionEvent) {
+        WallFurniInfo f = new WallFurniInfo(latestWallFurniMovement);
+        f.setxOffset(f.getxOffset() + offsetSteps());
+        movePoster(f);
+    }
+
+    public void pm_offset_down_click(ActionEvent actionEvent) {
+        WallFurniInfo f = new WallFurniInfo(latestWallFurniMovement);
+        f.setyOffset(f.getyOffset() + offsetSteps());
+        movePoster(f);
+    }
+
+    public void pm_offset_left_click(ActionEvent actionEvent) {
+        WallFurniInfo f = new WallFurniInfo(latestWallFurniMovement);
+        f.setxOffset(f.getxOffset() - offsetSteps());
+        movePoster(f);
+    }
+
+    public void pm_rd_left_click(ActionEvent actionEvent) {
+        WallFurniInfo f = new WallFurniInfo(latestWallFurniMovement);
+        f.setLeft(true);
+        movePoster(f);
+    }
+
+    public void pm_rd_right_click(ActionEvent actionEvent) {
+        WallFurniInfo f = new WallFurniInfo(latestWallFurniMovement);
+        f.setLeft(false);
+        movePoster(f);
+    }
+
+    public void pm_location_update(ActionEvent actionEvent) {
+
+        try {
+            WallFurniInfo f = new WallFurniInfo(latestWallFurniMovement.getFurniId(), pm_location_txt.getText());
+            movePoster(f);
+
+        } catch (Exception ignore) { }
     }
 }

@@ -100,15 +100,18 @@
                               <RadioButton fx:id="rd_fm_stack_flatten" disable="true" layoutX="8.0" layoutY="99.0" mnemonicParsing="false" onAction="#updateUI" text="Flatten at:" toggleGroup="$mv_stck_tgl" />
                            </children>
                         </AnchorPane>
-                        <CheckBox fx:id="fm_cbx_rotatefurni" layoutX="14.0" layoutY="148.0" mnemonicParsing="false" text="Rotate furniture" textFill="#000000d6" />
+                        <CheckBox fx:id="fm_cbx_rotatefurni" layoutX="14.0" layoutY="148.0" mnemonicParsing="false" onAction="#onRotatedFurniClick" text="Rotate furniture" textFill="#000000d6" />
                         <CheckBox fx:id="fm_cbx_wiredsafety" layoutX="132.0" layoutY="148.0" mnemonicParsing="false" selected="true" text="Wired safety" />
                         <CheckBox fx:id="fm_cbx_visualhelp" layoutX="236.0" layoutY="148.0" mnemonicParsing="false" selected="true" text="Visual help" />
-                        <AnchorPane layoutX="434.0" layoutY="13.0" prefHeight="154.0" prefWidth="94.0" style="-fx-border-width: 1px; -fx-border-color: #ccc;">
+                        <AnchorPane layoutX="434.0" layoutY="13.0" prefHeight="158.0" prefWidth="94.0" style="-fx-border-width: 1px; -fx-border-color: #ccc;">
                            <children>
                               <Label layoutX="9.0" layoutY="6.0" text="Commands:" />
                               <Label layoutX="12.0" layoutY="27.0" text=":move / :m" textFill="#000000b2" />
                               <Label layoutX="12.0" layoutY="46.0" text=":abort / :a" textFill="#000000b2" />
                               <Label layoutX="12.0" layoutY="65.0" text=":undo / :u" textFill="#000000b2" />
+                              <Label layoutX="12.0" layoutY="97.0" text=":exclude / :e" textFill="#000000b2" />
+                              <Label layoutX="12.0" layoutY="135.0" text=":reset / :r" textFill="#000000b2" />
+                              <Label layoutX="12.0" layoutY="116.0" text=":include / :i" textFill="#000000b2" />
                            </children>
                         </AnchorPane>
                      </children></AnchorPane>
@@ -116,15 +119,82 @@
            </Tab>
            <Tab text="Poster mover">
               <content>
-                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <AnchorPane layoutX="18.0" layoutY="11.0" prefHeight="158.0" prefWidth="156.0" style="-fx-background-color: #f2f2f2; -fx-border-color: #ccc; -fx-background-radius: 5px; -fx-border-radius: 5px;">
+                           <children>
+                              <Button fx:id="pm_loc_up_btn" disable="true" layoutX="59.0" layoutY="36.0" mnemonicParsing="false" onAction="#pm_loc_up_click" prefHeight="25.0" prefWidth="32.0" rotate="135.0" text="∟" />
+                              <Button fx:id="pm_loc_right_btn" disable="true" layoutX="86.0" layoutY="63.0" mnemonicParsing="false" onAction="#pm_loc_right_click" prefHeight="25.0" prefWidth="32.0" rotate="225.0" text="∟" />
+                              <Button fx:id="pm_loc_down_btn" disable="true" layoutX="59.0" layoutY="90.0" mnemonicParsing="false" onAction="#pm_loc_down_click" prefHeight="25.0" prefWidth="32.0" rotate="315.0" text="∟" />
+                              <Button fx:id="pm_loc_left_btn" disable="true" layoutX="32.0" layoutY="63.0" mnemonicParsing="false" onAction="#pm_loc_left_btn_click" prefHeight="25.0" prefWidth="32.0" rotate="45.0" text="∟" />
+                              <Label layoutX="13.0" layoutY="133.0" text="Step:" />
+                              <RadioButton layoutX="45.0" layoutY="133.0" mnemonicParsing="false" selected="true" text="1">
+                                 <toggleGroup>
+                                    <ToggleGroup fx:id="pm_loc_tgl" />
+                                 </toggleGroup>
+                              </RadioButton>
+                              <RadioButton layoutX="81.0" layoutY="133.0" mnemonicParsing="false" text="3" toggleGroup="$pm_loc_tgl" />
+                              <RadioButton layoutX="115.0" layoutY="133.0" mnemonicParsing="false" text="9" toggleGroup="$pm_loc_tgl" />
+                              <Label layoutX="11.0" layoutY="9.0" prefHeight="17.0" prefWidth="65.0" text="Location:" textFill="#000000db" />
+                           </children>
+                        </AnchorPane>
+                        <AnchorPane layoutX="197.0" layoutY="11.0" prefHeight="158.0" prefWidth="156.0" style="-fx-background-color: #f2f2f2; -fx-border-color: #ccc; -fx-background-radius: 5px; -fx-border-radius: 5px;">
+                           <children>
+                              <Button fx:id="pm_offset_up_btn" disable="true" layoutX="59.0" layoutY="36.0" mnemonicParsing="false" onAction="#pm_offset_up_click" prefHeight="25.0" prefWidth="32.0" rotate="135.0" text="∟" />
+                              <Button fx:id="pm_offset_right_btn" disable="true" layoutX="86.0" layoutY="63.0" mnemonicParsing="false" onAction="#pm_offset_right_click" prefHeight="25.0" prefWidth="32.0" rotate="225.0" text="∟" />
+                              <Button fx:id="pm_offset_down_btn" disable="true" layoutX="59.0" layoutY="90.0" mnemonicParsing="false" onAction="#pm_offset_down_click" prefHeight="25.0" prefWidth="32.0" rotate="315.0" text="∟" />
+                              <Button fx:id="pm_offset_left_btn" disable="true" layoutX="32.0" layoutY="63.0" mnemonicParsing="false" onAction="#pm_offset_left_click" prefHeight="25.0" prefWidth="32.0" rotate="45.0" text="∟" />
+                              <Label layoutX="13.0" layoutY="133.0" text="Step:" />
+                              <RadioButton layoutX="45.0" layoutY="133.0" mnemonicParsing="false" selected="true" text="1">
+                                 <toggleGroup>
+                                    <ToggleGroup fx:id="pm_loc_offset" />
+                                 </toggleGroup>
+                              </RadioButton>
+                              <RadioButton layoutX="81.0" layoutY="133.0" mnemonicParsing="false" text="3" toggleGroup="$pm_loc_offset" />
+                              <RadioButton layoutX="115.0" layoutY="133.0" mnemonicParsing="false" text="9" toggleGroup="$pm_loc_offset" />
+                              <Label layoutX="11.0" layoutY="9.0" prefHeight="17.0" prefWidth="65.0" text="Offset:" textFill="#000000db" />
+                           </children>
+                        </AnchorPane>
+                        <AnchorPane layoutX="377.0" layoutY="11.0" prefHeight="54.0" prefWidth="147.0" style="-fx-border-width: 1px; -fx-border-color: #ccc;">
+                           <children>
+                              <Label layoutX="9.0" layoutY="6.0" text="Selected furniture:" />
+                              <Label fx:id="pm_furni_lbl" layoutX="12.0" layoutY="27.0" text="None" textFill="#000000b2" />
+                           </children>
+                        </AnchorPane>
+                        <AnchorPane layoutX="377.0" layoutY="74.0" prefHeight="68.0" prefWidth="147.0" style="-fx-border-width: 1px; -fx-border-color: #ccc;">
+                           <children>
+                              <Label layoutX="9.0" layoutY="6.0" text="Location code:" />
+                              <TextField fx:id="pm_location_txt" disable="true" layoutX="9.0" layoutY="30.0" onAction="#pm_location_update" prefHeight="25.0" prefWidth="128.0" />
+                           </children>
+                        </AnchorPane>
+                        <Label layoutX="379.0" layoutY="151.0" text="Rotation:" />
+                        <RadioButton fx:id="pm_rd_left" disable="true" layoutX="441.0" layoutY="151.0" mnemonicParsing="false" onAction="#pm_rd_left_click" selected="true" text="L">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="pm_loc_LR" />
+                           </toggleGroup>
+                        </RadioButton>
+                        <RadioButton fx:id="pm_rd_right" disable="true" layoutX="482.0" layoutY="151.0" mnemonicParsing="false" onAction="#pm_rd_right_click" text="R" toggleGroup="$pm_loc_LR" />
+                     </children></AnchorPane>
               </content>
            </Tab>
            <Tab text="Settings">
               <content>
                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <Hyperlink layoutX="3.0" layoutY="3.0" text="Read the github README usage instructions" />
-                        <CheckBox fx:id="always_on_top_cbx" layoutX="7.0" layoutY="24.0" mnemonicParsing="false" onAction="#toggleAlwaysOnTop" prefHeight="31.0" prefWidth="109.0" text="Always on top" />
+                        <Hyperlink layoutX="9.0" layoutY="147.0" text="Read the github README usage instructions" />
+                        <CheckBox fx:id="always_on_top_cbx" layoutX="423.0" layoutY="143.0" mnemonicParsing="false" onAction="#toggleAlwaysOnTop" prefHeight="31.0" prefWidth="109.0" text="Always on top" />
+                        <AnchorPane layoutX="12.0" layoutY="12.0" prefHeight="54.0" prefWidth="210.0" style="-fx-border-color: #ccc; -fx-border-width: 1px;">
+                           <children>
+                              <Label layoutX="11.0" layoutY="6.0" text="Ratelimit:" />
+                              <RadioButton layoutX="149.0" layoutY="29.0" mnemonicParsing="false" onAction="#rtlmt_fast" selected="true" text="Fast" textFill="#000000db">
+                                 <toggleGroup>
+                                    <ToggleGroup fx:id="tgl_ratelimit" />
+                                 </toggleGroup></RadioButton>
+                              <RadioButton layoutX="70.0" layoutY="29.0" mnemonicParsing="false" onAction="#rtlmt_medium" prefWidth="83.0" text="Medium" textFill="#000000db" toggleGroup="$tgl_ratelimit" />
+                              <RadioButton layoutX="11.0" layoutY="29.0" mnemonicParsing="false" onAction="#rtlmt_slow" text="Slow" textFill="#000000db" toggleGroup="$tgl_ratelimit" />
+                           </children>
+                        </AnchorPane>
+                        <Button layoutX="12.0" layoutY="79.0" mnemonicParsing="false" onAction="#reload_inv" text="Reload Inventory" />
                      </children></AnchorPane>
               </content>
            </Tab>
