@@ -181,7 +181,7 @@
               <content>
                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <Hyperlink layoutX="9.0" layoutY="147.0" text="Read the github README usage instructions" />
+                        <Hyperlink fx:id="readmeLink" layoutX="9.0" layoutY="147.0" text="Read the github README usage instructions" />
                         <CheckBox fx:id="always_on_top_cbx" layoutX="423.0" layoutY="143.0" mnemonicParsing="false" onAction="#toggleAlwaysOnTop" prefHeight="31.0" prefWidth="109.0" text="Always on top" />
                         <AnchorPane layoutX="12.0" layoutY="12.0" prefHeight="54.0" prefWidth="210.0" style="-fx-border-color: #ccc; -fx-border-width: 1px;">
                            <children>

@@ -30,12 +30,13 @@ import java.util.*;
 @ExtensionInfo(
         Title =  "G-BuildTools",
         Description =  "For all your building needs",
-        Version =  "1.0-beta",
+        Version =  "1.0",
         Author =  "sirjonasxx"
 )
 public class GBuildTools extends ExtensionForm {
 
     public CheckBox always_on_top_cbx;
+    public Hyperlink readmeLink;
 
     // G-BuildTools general elements
     public CheckBox enable_gbuildtools;
@@ -99,7 +100,6 @@ public class GBuildTools extends ExtensionForm {
     public Button pm_offset_right_btn;
     public Button pm_offset_down_btn;
     public Button pm_offset_left_btn;
-
 
     private volatile int RATELIMIT = 525;
     private volatile int STACKTILE_RATELIMIT = 15;
@@ -307,6 +307,13 @@ public class GBuildTools extends ExtensionForm {
     @Override
     protected void initExtension() {
         moveHistory.add(new LinkedList<>());
+        readmeLink.setTooltip(new Tooltip("https://github.com/sirjonasxx/G-BuildTools/blob/master/README.md"));
+        readmeLink.setOnAction((ActionEvent event) -> {
+            Hyperlink h = (Hyperlink) event.getTarget();
+            String s = h.getTooltip().getText();
+            getHostServices().showDocument(s);
+            event.consume();
+        });
 
         // javafx spinner updates bugfix
         Spinner[] spinners = {height_offset_spinner, flatten_height_spinner, override_rotation_spinner};
