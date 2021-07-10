@@ -3,7 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane maxHeight="278.0" maxWidth="543.0" prefHeight="249.0" prefWidth="543.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="extension.GBuildTools">
+<AnchorPane style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="extension.GBuildTools">
    <children>
       <AnchorPane layoutY="216.0" prefHeight="37.0" prefWidth="543.0" style="-fx-background-color: #eee;">
          <children>

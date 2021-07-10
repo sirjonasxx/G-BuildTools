@@ -12,6 +12,8 @@ import gearth.protocol.HMessage;
 import gearth.protocol.HPacket;
 import gearth.ui.GEarthController;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -201,10 +203,9 @@ public class GBuildTools extends ExtensionForm {
         stage.setScene(new Scene(root));
         stage.getScene().getStylesheets().add(GEarthController.class.getResource("/gearth/ui/bootstrap3.css").toExternalForm());
         stage.getIcons().add(new Image(Main.class.getResourceAsStream("G-EarthLogoSmaller.png")));
-        stage.setHeight(283);
-        stage.setWidth(544);
 
         stage.setResizable(false);
+        stage.sizeToScene();
 
         return loader.getController();
     }
