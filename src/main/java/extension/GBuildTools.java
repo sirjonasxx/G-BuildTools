@@ -701,9 +701,6 @@ public class GBuildTools extends ExtensionForm {
     }
 
 
-    //todo
-    // * exclude furni & include furni & reset
-
     // furnimover
     private void furniMoverSendInfo(String text) {
         if (fm_cbx_visualhelp.isSelected()) {
