@@ -17,9 +17,9 @@ public class FloorFurniMovement {
     private final int oldZ;
     private final int newZ;
 
-    private final boolean useStacktile;
+    private final int useStacktileId;
 
-    public FloorFurniMovement(int typeId, int furniId, int oldX, int oldY, int oldRot, int newX, int newY, int newRot, int oldZ, int newZ, boolean useStacktile) {
+    public FloorFurniMovement(int typeId, int furniId, int oldX, int oldY, int oldRot, int newX, int newY, int newRot, int oldZ, int newZ, int useStacktileId) {
         this.typeId = typeId;
         this.furniId = furniId;
         this.oldX = oldX;
@@ -30,7 +30,7 @@ public class FloorFurniMovement {
         this.newRot = newRot;
         this.oldZ = oldZ;
         this.newZ = newZ;
-        this.useStacktile = useStacktile;
+        this.useStacktileId = useStacktileId;
     }
 
     public void perform(PacketInfoSupport packetInfoSupport) {
@@ -69,8 +69,8 @@ public class FloorFurniMovement {
         return newRot;
     }
 
-    public boolean useStacktile() {
-        return useStacktile;
+    public int useStacktileId() {
+        return useStacktileId;
     }
 
     public int getOldZ() {
