@@ -1,4 +1,6 @@
 # G-BuildTools
+G-BuildTools is an advanced G-Earth extension that attempts to compensate all Habbo's shortcomings when it comes to building experience.
+
 * If you have an instable connection, it is recommended to set your ratelimit lower in _Settings_: ![image](https://user-images.githubusercontent.com/36828922/125194599-46ec0280-e252-11eb-8b70-bcdc541b8e25.png)
 * Do not forget to **enable** the extension before using it
 
@@ -22,7 +24,7 @@ There are **3 options:**
 
 **Commands:**
 * :move
-* :abort _:abort -> aborts remaining movements_
+* :abort _-> aborts remaining movements_
 * :undo _-> you may undo any past movements_
 * :exclude _-> exclude a type of furniture from being moved (for example, the floor). You will be asked to shift+click a furniture of the type_
 * :include _-> undo the :exclude_
