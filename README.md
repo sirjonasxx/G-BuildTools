@@ -5,7 +5,12 @@ G-BuildTools is an advanced G-Earth extension that attempts to compensate all Ha
 * Do not forget to **enable** the extension before using it
 
 Youtube demo's:
-TODO
+1. [Furni Mover - Demo](https://www.youtube.com/watch?v=zdP5-REGP-M)
+2. [Poster Mover - Demo](https://www.youtube.com/watch?v=7lGu5yvtpXI)
+3. [Quickdrop - Demo](https://www.youtube.com/watch?v=Z7YXwfDyMVA)
+4. [Wired Duplicator - Demo](https://www.youtube.com/watch?v=SgQZwKdnBkY)
+5. [Stacktile Tools - Demo](https://www.youtube.com/watch?v=-5gHMBWeBQo)
+6. [Invisible Furni Tools - Demo](https://www.youtube.com/watch?v=A8TEgt4mKXc)
 
 ## Furni mover
 ![image](https://user-images.githubusercontent.com/36828922/125194835-4b64eb00-e253-11eb-8a41-01790e85666a.png)
