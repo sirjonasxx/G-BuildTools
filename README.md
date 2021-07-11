@@ -41,26 +41,30 @@ There are **3 options:**
 Move a poster manually to let G-BuildTools detect which poster you want to move. Afterwards, you can use all options in the Poster Mover to move the poster, you can also edit the "location code" directly (press enter to save)
 
 
-## Quickdrop furniture
+## General
+![image](https://user-images.githubusercontent.com/36828922/125197481-19a55180-e25e-11eb-905d-0fbe2165a611.png)
+
+
+### Quickdrop furniture
 ![image](https://user-images.githubusercontent.com/36828922/125194069-f2e01e80-e24f-11eb-9e15-793db389ddd3.png)
 
 * Places furniture instantly, replacing them with a black loading box until the furniture is put
 * If you placed a furniture in an invalid location, you may need to reload inventory to get it back (settings -> reload inventory)
 
-## Wired duplicator
+### Wired duplicator
 ![image](https://user-images.githubusercontent.com/36828922/125194155-64b86800-e250-11eb-9b74-5fd9fd471968.png)
 
 1. Set up a wired box
 2. Select "Last condition/effect/trigger" depending on the type of wired
 3. Double click the wireds you want to update to the same settings as the wired box in step 1
 
-## Stacktile tools
+### Stacktile tools
 ![image](https://user-images.githubusercontent.com/36828922/125196911-e5309600-e25b-11eb-9a2e-452b40e7b0c8.png)
 
 Self explanatory
 
 
-## Invisible furni tools
+### Invisible furni tools
 ![image](https://user-images.githubusercontent.com/36828922/125196925-f11c5800-e25b-11eb-9d61-aa43f1babd43.png)
 
 Self explanatory
