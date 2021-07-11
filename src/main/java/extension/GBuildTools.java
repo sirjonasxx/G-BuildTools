@@ -205,11 +205,14 @@ public class GBuildTools extends ExtensionForm {
         stage.getIcons().add(new Image(Main.class.getResourceAsStream("G-EarthLogoSmaller.png")));
 
         stage.setResizable(false);
-        stage.sizeToScene();
 
         return loader.getController();
     }
 
+    @Override
+    protected void onShow() {
+        primaryStage.sizeToScene();
+    }
 
     private boolean buildToolsEnabled() {
         return enable_gbuildtools.isSelected();
@@ -412,7 +415,7 @@ public class GBuildTools extends ExtensionForm {
             selection.clear();
             sourcePosition = null;
             sourceEndPosition = null;
-            excludeFurniState = null;
+            excludeFurniState = ExcludeFurniState.NONE;
         }
         latestWallFurniMovement = null;
         updateLocationStringUI = true;
