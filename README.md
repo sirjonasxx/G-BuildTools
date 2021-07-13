@@ -1,4 +1,7 @@
 # G-BuildTools
+
+**NOTE: Report bugs [here](https://github.com/sirjonasxx/G-BuildTools/issues) and check this page regularly for updates**
+
 G-BuildTools is an advanced G-Earth extension that attempts to compensate all Habbo's shortcomings when it comes to building experience. It currently contains 6 features
 
 * If you have an instable connection, it is recommended to set your ratelimit lower in _Settings_: ![image](https://user-images.githubusercontent.com/36828922/125194599-46ec0280-e252-11eb-8b70-bcdc541b8e25.png)
