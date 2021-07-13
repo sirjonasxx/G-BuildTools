@@ -739,9 +739,6 @@ public class GBuildTools extends ExtensionForm {
                         if (task.size() == 0) {
                             furniMoverSendInfo("Undone last furni movements");
                             moveFurniState = MoveFurniState.NONE;
-                            if (moveHistory.size() > 1) { // always have 1
-                                moveHistory.removeLast();
-                            }
                             latestStackMove = null;
                         }
                         else {
@@ -824,6 +821,7 @@ public class GBuildTools extends ExtensionForm {
                         moveHistory.add(new LinkedList<>());
                     } else if (moveFurniState == MoveFurniState.MOVING) {
                         workList.clear();
+                        moveHistory.add(new LinkedList<>());
                     }
                     selectionState = SelectionState.NONE;
                     moveFurniState = MoveFurniState.NONE;
@@ -834,16 +832,18 @@ public class GBuildTools extends ExtensionForm {
             case ":u":
                 hMessage.setBlocked(true);
                 synchronized (furniMoveLock) {
-                    workList.clear();
-                    while (moveHistory.size() > 1 && moveHistory.getLast().size() == 0) {
-                        moveHistory.removeLast();
+                    if (moveFurniState == MoveFurniState.NONE) {
+                        if (moveHistory.size() > 1) {
+                            moveHistory.removeLast();
+                            furniMoverSendInfo("Undoing latest movements");
+                            moveFurniState = MoveFurniState.UNDOING;
+                        }
+                        else {
+                            furniMoverSendInfo("Nothing to undo");
+                        }
                     }
-                    if (moveHistory.getLast().size() == 0) {
-                        furniMoverSendInfo("Nothing to undo");
-                        moveFurniState = MoveFurniState.NONE;
-                    } else {
-                        furniMoverSendInfo("Undoing latest movements");
-                        moveFurniState = MoveFurniState.UNDOING;
+                    else {
+                        furniMoverSendInfo("Abort what you're doing first!");
                     }
                 }
                 break;
