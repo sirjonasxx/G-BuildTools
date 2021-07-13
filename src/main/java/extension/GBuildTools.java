@@ -101,9 +101,10 @@ public class GBuildTools extends ExtensionForm {
     public Button pm_offset_right_btn;
     public Button pm_offset_down_btn;
     public Button pm_offset_left_btn;
+    public CheckBox cbx_spam;
 
-    private volatile int RATELIMIT = 525;
-    private volatile int STACKTILE_RATELIMIT = 15;
+    private volatile int RATELIMIT = 526;
+    private volatile int STACKTILE_RATELIMIT = 16;
     private volatile int MOVEFURNI_RATELIMIT = 30;
 
     private PacketInfoSupport packetInfoSupport = null;
@@ -361,6 +362,7 @@ public class GBuildTools extends ExtensionForm {
         packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "Chat", this::onUserChat);
         packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "MoveAvatar", this::onTileClick);
         packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "MoveObject", this::onMoveFurni);
+        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "ObjectUpdate", this::onObjectUpdate);
 
 
         // poster mover
@@ -704,6 +706,56 @@ public class GBuildTools extends ExtensionForm {
     }
 
 
+
+    private final HashMap<Integer, HFloorItem> latestFurniUpdates = new HashMap<>();
+
+
+    private void onObjectUpdate(HMessage hMessage) {
+        HFloorItem item = new HFloorItem(hMessage.getPacket());
+        synchronized (latestFurniUpdates) {
+            latestFurniUpdates.put(item.getId(), item);
+        }
+    }
+
+
+    private void moveFurni(int furniId, int delay, int x, int y, int rot, int expected_z) { //expected_z = z*100 or < 0 if doesn't matter
+        // ignore expected_z actually
+        synchronized (latestFurniUpdates) {
+            latestFurniUpdates.remove(furniId);
+        }
+
+        HFloorItem item;
+        int i = 0;
+        do {
+            packetInfoSupport.sendToServer("MoveObject", furniId, x, y, rot);
+            Utils.sleep(delay);
+
+            synchronized (latestFurniUpdates) {
+                item = latestFurniUpdates.get(furniId);
+            }
+            i++;
+        } while(item == null && i < 3 && cbx_spam.isSelected());
+    }
+
+
+    private void setStackHeight(int stackTileId, int delay, int z) {
+        synchronized (latestFurniUpdates) {
+            latestFurniUpdates.remove(stackTileId);
+        }
+
+        HFloorItem item;
+        int i = 0;
+        do {
+            packetInfoSupport.sendToServer("SetCustomStackingHeight", stackTileId, z);
+            Utils.sleep(delay);
+
+            synchronized (latestFurniUpdates) {
+                item = latestFurniUpdates.get(stackTileId);
+            }
+            i++;
+        } while(item == null && i < 3 && cbx_spam.isSelected());
+    }
+
     // furnimover
     private void furniMoverSendInfo(String text) {
         if (fm_cbx_visualhelp.isSelected()) {
@@ -771,20 +823,17 @@ public class GBuildTools extends ExtensionForm {
                     int stacktileId = movement.useStacktileId();
 
                     if (latestStackMove == null || latestStackMove.getX() != x || latestStackMove.getY() != y) {
-                        packetInfoSupport.sendToServer("MoveObject", stacktileId, x, y, 0);
-                        Utils.sleep(MOVEFURNI_RATELIMIT/2 + 1);
+                        moveFurni(stacktileId, MOVEFURNI_RATELIMIT/2, x, y, 0, -1);
                         latestStackMove = null;
                     }
 
                     if (latestStackMove == null || !latestStackMove.equals(new HPoint(x, y, z))) {
-                        packetInfoSupport.sendToServer("SetCustomStackingHeight", stacktileId, z);
-                        Utils.sleep(MOVEFURNI_RATELIMIT/2 + 1);
+                        setStackHeight(stacktileId, MOVEFURNI_RATELIMIT/2, z);
                     }
                     latestStackMove = new HPoint(x, y, z);
                 }
 
-                packetInfoSupport.sendToServer("MoveObject", furniId, x, y, rot);
-                Utils.sleep(MOVEFURNI_RATELIMIT);
+                moveFurni(furniId, MOVEFURNI_RATELIMIT, x, y, rot, z);
             }
             else {
                 Utils.sleep(2);
@@ -1254,19 +1303,19 @@ public class GBuildTools extends ExtensionForm {
 //    private final static int MOVEFURNI_RATELIMIT = 30;
 
     public void rtlmt_medium(ActionEvent actionEvent) {
-        RATELIMIT = 535;
-        STACKTILE_RATELIMIT = 23;
-        MOVEFURNI_RATELIMIT = 47;
+        RATELIMIT = 536;
+        STACKTILE_RATELIMIT = 24;
+        MOVEFURNI_RATELIMIT = 48;
     }
     public void rtlmt_fast(ActionEvent actionEvent) {
-        RATELIMIT = 525;
-        STACKTILE_RATELIMIT = 15;
+        RATELIMIT = 526;
+        STACKTILE_RATELIMIT = 16;
         MOVEFURNI_RATELIMIT = 30;
     }
     public void rtlmt_slow(ActionEvent actionEvent) {
-        RATELIMIT = 545;
+        RATELIMIT = 546;
         STACKTILE_RATELIMIT = 30;
-        MOVEFURNI_RATELIMIT = 45;
+        MOVEFURNI_RATELIMIT = 46;
     }
 
 

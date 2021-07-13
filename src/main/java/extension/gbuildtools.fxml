@@ -188,15 +188,16 @@
                      <children>
                         <Hyperlink fx:id="readmeLink" layoutX="9.0" layoutY="147.0" text="Read the github README usage instructions" />
                         <CheckBox fx:id="always_on_top_cbx" layoutX="423.0" layoutY="143.0" mnemonicParsing="false" onAction="#toggleAlwaysOnTop" prefHeight="31.0" prefWidth="109.0" text="Always on top" />
-                        <AnchorPane layoutX="12.0" layoutY="12.0" prefHeight="54.0" prefWidth="210.0" style="-fx-border-color: #ccc; -fx-border-width: 1px;">
+                        <AnchorPane layoutX="12.0" layoutY="12.0" prefHeight="54.0" prefWidth="309.0" style="-fx-border-color: #ccc; -fx-border-width: 1px;">
                            <children>
                               <Label layoutX="11.0" layoutY="6.0" text="Ratelimit:" />
-                              <RadioButton layoutX="149.0" layoutY="29.0" mnemonicParsing="false" onAction="#rtlmt_fast" selected="true" text="Fast" textFill="#000000db">
+                              <RadioButton layoutX="253.0" layoutY="29.0" mnemonicParsing="false" onAction="#rtlmt_fast" selected="true" text="Fast" textFill="#000000db">
                                  <toggleGroup>
                                     <ToggleGroup fx:id="tgl_ratelimit" />
                                  </toggleGroup></RadioButton>
-                              <RadioButton layoutX="70.0" layoutY="29.0" mnemonicParsing="false" onAction="#rtlmt_medium" prefWidth="83.0" text="Medium" textFill="#000000db" toggleGroup="$tgl_ratelimit" />
-                              <RadioButton layoutX="11.0" layoutY="29.0" mnemonicParsing="false" onAction="#rtlmt_slow" text="Slow" textFill="#000000db" toggleGroup="$tgl_ratelimit" />
+                              <RadioButton layoutX="174.0" layoutY="29.0" mnemonicParsing="false" onAction="#rtlmt_medium" prefWidth="83.0" text="Medium" textFill="#000000db" toggleGroup="$tgl_ratelimit" />
+                              <RadioButton layoutX="115.0" layoutY="29.0" mnemonicParsing="false" onAction="#rtlmt_slow" text="Slow" textFill="#000000db" toggleGroup="$tgl_ratelimit" />
+                              <CheckBox fx:id="cbx_spam" layoutX="11.0" layoutY="27.0" mnemonicParsing="false" text="Spam mode" />
                            </children>
                         </AnchorPane>
                         <Button layoutX="12.0" layoutY="79.0" mnemonicParsing="false" onAction="#reload_inv" text="Reload Inventory" />
