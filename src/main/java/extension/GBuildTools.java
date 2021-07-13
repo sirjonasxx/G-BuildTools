@@ -72,11 +72,12 @@ public class GBuildTools extends ExtensionForm {
     public CheckBox fm_cbx_inversedir;
 
     public CheckBox fm_cbx_usestacktile;
-    public RadioButton rd_fm_stack_matchheight;
     public RadioButton rd_fm_stack_offset;
     public RadioButton rd_fm_stack_flatten;
     public Spinner<Double> height_offset_spinner;
     public Spinner<Double> flatten_height_spinner;
+    public Label fm_grow_lbl;
+    public Spinner<Double> grow_factor_spinner;
 
     public CheckBox fm_cbx_rotatefurni;
     public CheckBox fm_cbx_wiredsafety;
@@ -263,11 +264,12 @@ public class GBuildTools extends ExtensionForm {
             // furni mover
             fm_cbx_inversedir.setDisable(!rd_fm_mode_rect.isSelected());
             fm_cbx_usestacktile.setDisable(!stackLAvailable);
-            rd_fm_stack_matchheight.setDisable(!stackLAvailable || !fm_cbx_usestacktile.isSelected());
             rd_fm_stack_offset.setDisable(!stackLAvailable || !fm_cbx_usestacktile.isSelected());
             rd_fm_stack_flatten.setDisable(!stackLAvailable || !fm_cbx_usestacktile.isSelected());
+            fm_grow_lbl.setDisable(!stackLAvailable || !fm_cbx_usestacktile.isSelected());
             height_offset_spinner.setDisable(!stackLAvailable || !fm_cbx_usestacktile.isSelected() || !rd_fm_stack_offset.isSelected());
             flatten_height_spinner.setDisable(!stackLAvailable || !fm_cbx_usestacktile.isSelected() || !rd_fm_stack_flatten.isSelected());
+            grow_factor_spinner.setDisable(!stackLAvailable || !fm_cbx_usestacktile.isSelected());
 
             rd_fm_mode_rect.setDisable(selectionState == SelectionState.AWAIT_SELECTION2 || selectionState == SelectionState.AWAIT_MOVE);
             rd_fm_mode_auto.setDisable(selectionState == SelectionState.AWAIT_SELECTION2 || selectionState == SelectionState.AWAIT_MOVE);
@@ -318,7 +320,7 @@ public class GBuildTools extends ExtensionForm {
         });
 
         // javafx spinner updates bugfix
-        Spinner[] spinners = {height_offset_spinner, flatten_height_spinner, override_rotation_spinner};
+        Spinner[] spinners = {height_offset_spinner, flatten_height_spinner, override_rotation_spinner, grow_factor_spinner};
         for(Spinner spinner : spinners) {
             spinner.focusedProperty().addListener((observable, oldValue, newValue) -> {
                 if (!newValue) spinner.increment(0); // won't change value, but will commit editor
@@ -899,6 +901,9 @@ public class GBuildTools extends ExtensionForm {
         int stackTileId = stackTile == null ? -1 : stackTile.getId();
         boolean isStackTileUsed = false;
 
+        Optional<Integer> optMinZ = selection.stream().map(hFloorItem -> (int)(hFloorItem.getTile().getZ() * 100)).min(Integer::compareTo);
+        int lowestZ = optMinZ.orElse(0);
+
         List<FloorFurniMovement> floorFurniMovements = new ArrayList<>();
         for (HFloorItem floorItem : selection) {
             if (stacktiles.contains(floorItem.getTypeId())) {
@@ -916,14 +921,21 @@ public class GBuildTools extends ExtensionForm {
 
             // dont implement new rotation
 
+
             int oldZ = (int)(floorItem.getTile().getZ() * 100);
             int newZ = oldZ;
-            if (rd_fm_stack_flatten.isSelected()) {
-                newZ = (int)(flatten_height_spinner.getValue() * 100);
+            if (fm_cbx_usestacktile.isSelected()) {
+                if (rd_fm_stack_flatten.isSelected()) {
+                    newZ = (int)(flatten_height_spinner.getValue() * 100);
+                }
+                if (rd_fm_stack_offset.isSelected()) {
+                    double growFactor = grow_factor_spinner.getValue();
+                    int oldZgrown = (int)((oldZ - lowestZ) * growFactor) + lowestZ;
+
+                    newZ = ((int)(height_offset_spinner.getValue() * 100)) + oldZgrown;
+                }
             }
-            if (rd_fm_stack_offset.isSelected()) {
-                newZ = ((int)(height_offset_spinner.getValue() * 100)) + oldZ;
-            }
+
 
             boolean useStackTile = fm_cbx_usestacktile.isSelected()
                     && stackTileLarge() != null &&

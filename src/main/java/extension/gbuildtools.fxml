@@ -81,23 +81,28 @@
                         </AnchorPane>
                         <AnchorPane layoutX="196.0" layoutY="13.0" prefHeight="129.0" prefWidth="218.0" style="-fx-background-color: #f2f2f2; -fx-background-radius: 5px; -fx-border-color: #ccc; -fx-border-radius: 5px;">
                            <children>
-                              <CheckBox fx:id="fm_cbx_usestacktile" disable="true" layoutX="8.0" layoutY="9.0" mnemonicParsing="false" onAction="#updateUI" selected="true" text="Use stacktile (2x2)" textFill="#000000d6" />
-                              <Spinner fx:id="height_offset_spinner" disable="true" editable="true" layoutX="109.0" layoutY="64.0" prefHeight="25.0" prefWidth="83.0">
+                              <CheckBox fx:id="fm_cbx_usestacktile" disable="true" layoutX="8.0" layoutY="6.0" mnemonicParsing="false" onAction="#updateUI" selected="true" text="Use stacktile (2x2)" textFill="#000000d6" />
+                              <Spinner fx:id="height_offset_spinner" disable="true" editable="true" layoutX="102.0" layoutY="31.0" prefHeight="25.0" prefWidth="83.0">
                                  <valueFactory>
                                     <SpinnerValueFactory.DoubleSpinnerValueFactory amountToStepBy="0.1" initialValue="0.0" max="60.0" min="-50.0" />
                                  </valueFactory>
                               </Spinner>
-                              <RadioButton fx:id="rd_fm_stack_matchheight" disable="true" layoutX="8.0" layoutY="37.0" mnemonicParsing="false" onAction="#updateUI" selected="true" text="Match height">
+                              <RadioButton fx:id="rd_fm_stack_offset" disable="true" layoutX="8.0" layoutY="35.0" mnemonicParsing="false" onAction="#updateUI" selected="true" text="Offset:">
                                  <toggleGroup>
                                     <ToggleGroup fx:id="mv_stck_tgl" />
                                  </toggleGroup></RadioButton>
-                              <RadioButton fx:id="rd_fm_stack_offset" disable="true" layoutX="8.0" layoutY="68.0" mnemonicParsing="false" onAction="#updateUI" text="Offset:" toggleGroup="$mv_stck_tgl" />
-                              <Spinner fx:id="flatten_height_spinner" disable="true" editable="true" layoutX="109.0" layoutY="95.0" prefHeight="25.0" prefWidth="83.0">
+                              <Spinner fx:id="flatten_height_spinner" disable="true" editable="true" layoutX="102.0" layoutY="63.0" prefHeight="25.0" prefWidth="83.0">
                                  <valueFactory>
                                     <SpinnerValueFactory.DoubleSpinnerValueFactory amountToStepBy="0.1" initialValue="0.0" max="60.0" min="-50.0" />
                                  </valueFactory>
                               </Spinner>
-                              <RadioButton fx:id="rd_fm_stack_flatten" disable="true" layoutX="8.0" layoutY="99.0" mnemonicParsing="false" onAction="#updateUI" text="Flatten at:" toggleGroup="$mv_stck_tgl" />
+                              <RadioButton fx:id="rd_fm_stack_flatten" disable="true" layoutX="8.0" layoutY="67.0" mnemonicParsing="false" onAction="#updateUI" text="Flatten at:" toggleGroup="$mv_stck_tgl" />
+                              <Label fx:id="fm_grow_lbl" disable="true" layoutX="10.0" layoutY="101.0" text="Grow factor:" />
+                              <Spinner fx:id="grow_factor_spinner" disable="true" editable="true" layoutX="102.0" layoutY="95.0" prefHeight="25.0" prefWidth="83.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.DoubleSpinnerValueFactory amountToStepBy="0.1" initialValue="1.0" max="500.0" min="0.05" />
+                                 </valueFactory>
+                              </Spinner>
                            </children>
                         </AnchorPane>
                         <CheckBox fx:id="fm_cbx_rotatefurni" layoutX="14.0" layoutY="148.0" mnemonicParsing="false" onAction="#onRotatedFurniClick" text="Rotate furniture" textFill="#000000d6" />
