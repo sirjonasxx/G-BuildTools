@@ -12,23 +12,22 @@ import gearth.protocol.HMessage;
 import gearth.protocol.HPacket;
 import gearth.ui.GEarthController;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
-import room.RoomFurniState;
+import room.FloorState;
 import stuff.*;
 import utils.Utils;
 import utils.Wrapper;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 @ExtensionInfo(
         Title =  "G-BuildTools",
@@ -117,7 +116,7 @@ public class GBuildTools extends ExtensionForm {
     private PacketInfoSupport packetInfoSupport = null;
     private FurniDataTools furniDataTools = null;
 
-    private RoomFurniState roomFurniState = null;
+    private FloorState floorState = null;
 
 
     // quickdrop furni
@@ -228,8 +227,8 @@ public class GBuildTools extends ExtensionForm {
         return furniDataTools != null && furniDataTools.isReady();
     }
     private HFloorItem stackTileLarge() {
-        if (!roomFurniState.inRoom() || !furniDataReady()) return null;
-        List<HFloorItem> items = roomFurniState.getItemsFromType(furniDataTools, "tile_stackmagic2");
+        if (!floorState.inRoom() || !furniDataReady()) return null;
+        List<HFloorItem> items = floorState.getItemsFromType(furniDataTools, "tile_stackmagic2");
         if (items.size() == 0) return null;
         return items.get(0);
     }
@@ -239,8 +238,8 @@ public class GBuildTools extends ExtensionForm {
         Platform.runLater(() -> {
             boolean stackLAvailable = stackTileLarge() != null;
 
-            room_found_lbl.setText(roomFurniState.inRoom() ? "Room found" : "No room found");
-            room_found_lbl.setTextFill(roomFurniState.inRoom() ? Paint.valueOf("Green") : Paint.valueOf("Red"));
+            room_found_lbl.setText(floorState.inRoom() ? "Room found" : "No room found");
+            room_found_lbl.setTextFill(floorState.inRoom() ? Paint.valueOf("Green") : Paint.valueOf("Red"));
             furnidata_lbl.setText(furniDataReady() ? "Furnidata loaded" : "Furnidata not loaded");
             furnidata_lbl.setTextFill(furniDataReady() ? Paint.valueOf("Green") : Paint.valueOf("Red"));
             stack_tile_lbl.setText(stackLAvailable ? "Stack tile found" : "No stack tile found");
@@ -345,7 +344,7 @@ public class GBuildTools extends ExtensionForm {
 
         packetInfoSupport = new PacketInfoSupport(this);
 
-        roomFurniState = new RoomFurniState(packetInfoSupport, o -> updateUI());
+        floorState = new FloorState(packetInfoSupport, o -> updateUI());
 
         packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "CloseConnection", m -> reset());
         packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "Quit", m -> reset());
@@ -383,7 +382,7 @@ public class GBuildTools extends ExtensionForm {
         packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "MoveWallItem", this::onMoveWallItem);
         packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "ItemUpdate", this::posterMoved);
 
-        roomFurniState.requestRoom(this);
+        floorState.requestRoom(this);
 
 
         onConnect((host, i, s1, s2, hClient) -> {
@@ -434,7 +433,7 @@ public class GBuildTools extends ExtensionForm {
         }
         latestWallFurniMovement = null;
         updateLocationStringUI = true;
-        roomFurniState.reset();
+        floorState.reset();
         updateUI();
     }
 
@@ -491,7 +490,7 @@ public class GBuildTools extends ExtensionForm {
         }
     }
     private void onFurniPlace(HMessage hMessage) {
-        if (!buildToolsEnabled() || !roomFurniState.inRoom()) return;
+        if (!buildToolsEnabled() || !floorState.inRoom()) return;
 
         hMessage.setBlocked(true);
 
@@ -528,7 +527,7 @@ public class GBuildTools extends ExtensionForm {
             delayedFloorFurniDrop.add(dropInfo);
         }
 
-        double height = roomFurniState.getTileHeight(dropInfo.getX(), dropInfo.getY());
+        double height = floorState.getTileHeight(dropInfo.getX(), dropInfo.getY());
 
         if (override_rotation_cbx.isSelected()) {
             dropInfo.setRotation(override_rotation_spinner.getValue());
@@ -648,8 +647,8 @@ public class GBuildTools extends ExtensionForm {
 
         int furniId = hMessage.getPacket().readInteger();
         String className =
-                (!furniDataReady() || !roomFurniState.inRoom() || roomFurniState.furniFromId(furniId) == null) ? null :
-                        furniDataTools.getFloorItemName(roomFurniState.furniFromId(furniId).getTypeId());
+                (!furniDataReady() || !floorState.inRoom() || floorState.furniFromId(furniId) == null) ? null :
+                        furniDataTools.getFloorItemName(floorState.furniFromId(furniId).getTypeId());
 
         if (rd_wired_trig.isSelected()) {
             synchronized (wiredLock) {
@@ -698,11 +697,11 @@ public class GBuildTools extends ExtensionForm {
         }
     }
     private void setStackHeight(HMessage hMessage) {
-        if (buildToolsEnabled() && st_allstacktile_cbx.isSelected() && furniDataReady() && roomFurniState.inRoom()) {
+        if (buildToolsEnabled() && st_allstacktile_cbx.isSelected() && furniDataReady() && floorState.inRoom()) {
             List<HFloorItem> allStackTiles = new ArrayList<>();
-            allStackTiles.addAll(roomFurniState.getItemsFromType(furniDataTools, "tile_stackmagic2"));
-            allStackTiles.addAll(roomFurniState.getItemsFromType(furniDataTools, "tile_stackmagic1"));
-            allStackTiles.addAll(roomFurniState.getItemsFromType(furniDataTools, "tile_stackmagic"));
+            allStackTiles.addAll(floorState.getItemsFromType(furniDataTools, "tile_stackmagic2"));
+            allStackTiles.addAll(floorState.getItemsFromType(furniDataTools, "tile_stackmagic1"));
+            allStackTiles.addAll(floorState.getItemsFromType(furniDataTools, "tile_stackmagic"));
 
             if (allStackTiles.size() > 1) {
                 hMessage.setBlocked(true);
@@ -732,6 +731,36 @@ public class GBuildTools extends ExtensionForm {
         }
     }
 
+    private HPoint stackTileBestMoveLocation(int x, int y) {
+        char tileHeight = floorState.floorHeight(x, y);
+
+        if (floorState.inRoom() && tileHeight != 'x') {
+            int[][] offsets = {{0, 0}, {-1, 0}, {0, -1}, {-1, -1}};
+            return Arrays.stream(offsets).filter(
+                    o1 -> Arrays.stream(offsets).map(o2 -> floorState.floorHeight(x + o1[0] - o2[0], y + o1[1] - o2[1])).distinct().count() == 1)
+                    .findFirst().map(l -> new HPoint(l[0], l[1])).orElse(new HPoint(-1, -1));
+
+
+//            int[][] potentialOffsets = {{0, 0}, {-1, 0}, {0, -1}, {-1, -1}};
+//            for (int[] offsets : potentialOffsets) {
+//                int xOffset = offsets[0];
+//                int yOffset = offsets[1];
+//
+//                boolean valid = true;
+//                for (int x2 = x + xOffset; x2 < x + xOffset + 2; x2++) {
+//                    for (int y2 = y + xOffset; y2 < y + yOffset + 2; y2++) {
+//                        if (floorState.floorHeight(x2, y2) != tileHeight) {
+//                            valid = false;
+//                        }
+//                    }
+//                }
+//                if (valid) return new HPoint(x + xOffset, y + yOffset);
+//            }
+
+        }
+
+        return new HPoint(-1, -1);
+    }
     // furnimover
     private void furniMoverSendInfo(String text) {
         if (fm_cbx_visualhelp.isSelected()) {
@@ -796,17 +825,19 @@ public class GBuildTools extends ExtensionForm {
 
 //                HFloorItem stackTile = stackTileLarge();
                 if (movement.useStacktileId() != -1) {
+                    HPoint stackLoc = stackTileBestMoveLocation(x, y);
+
                     int stacktileId = movement.useStacktileId();
 
-                    if (latestStackMove == null || latestStackMove.getX() != x || latestStackMove.getY() != y) {
-                        moveFurni(stacktileId, MOVEFURNI_RATELIMIT/2, x, y, 0, -1);
+                    if (latestStackMove == null || latestStackMove.getX() != stackLoc.getX() || latestStackMove.getY() != stackLoc.getY()) {
+                        moveFurni(stacktileId, MOVEFURNI_RATELIMIT/2, stackLoc.getX(), stackLoc.getY(), 0, -1);
                         latestStackMove = null;
                     }
 
-                    if (latestStackMove == null || !latestStackMove.equals(new HPoint(x, y, z))) {
+                    if (latestStackMove == null || !latestStackMove.equals(new HPoint(stackLoc.getX(), stackLoc.getY(), z))) {
                         setStackHeight(stacktileId, MOVEFURNI_RATELIMIT/2, z);
                     }
-                    latestStackMove = new HPoint(x, y, z);
+                    latestStackMove = new HPoint(stackLoc.getX(), stackLoc.getY(), z);
                 }
 
                 moveFurni(furniId, MOVEFURNI_RATELIMIT, x, y, rot, z);
@@ -877,7 +908,7 @@ public class GBuildTools extends ExtensionForm {
             case ":exclude":
             case ":e":
                 hMessage.setBlocked(true);
-                if (!furniDataReady() || !roomFurniState.inRoom() ) {
+                if (!furniDataReady() || !floorState.inRoom() ) {
                     furniMoverSendInfo("Wait until furnidata is parsed and room is loaded");
                     return;
                 }
@@ -887,7 +918,7 @@ public class GBuildTools extends ExtensionForm {
             case ":include":
             case ":i":
                 hMessage.setBlocked(true);
-                if (!furniDataReady() || !roomFurniState.inRoom() ) {
+                if (!furniDataReady() || !floorState.inRoom() ) {
                     furniMoverSendInfo("Wait until furnidata is parsed and room is loaded");
                     return;
                 }
@@ -1128,14 +1159,14 @@ public class GBuildTools extends ExtensionForm {
                         selection.clear();
                         for (int x = x1; x <= x2; x++) {
                             for (int y = y1; y <= y2; y++) {
-                                selection.addAll(roomFurniState.getFurniOnTile(x, y));
+                                selection.addAll(floorState.getFurniOnTile(x, y));
                             }
                         }
 
                         sourceEndPosition = null;
                     }
                     else { // tile or auto
-                        selection = roomFurniState.getFurniOnTile(sourcePosition.getX(), sourcePosition.getY());
+                        selection = floorState.getFurniOnTile(sourcePosition.getX(), sourcePosition.getY());
                     }
 
                     if (rd_fm_mode_auto.isSelected()) {
@@ -1160,11 +1191,11 @@ public class GBuildTools extends ExtensionForm {
         updateUI();
     }
     private void onMoveFurni(HMessage hMessage) {
-        if (furniDataReady() && roomFurniState.inRoom() && excludeFurniState != ExcludeFurniState.NONE) {
+        if (furniDataReady() && floorState.inRoom() && excludeFurniState != ExcludeFurniState.NONE) {
             hMessage.setBlocked(true);
 
             int furniId = hMessage.getPacket().readInteger();
-            HFloorItem floorItem = roomFurniState.furniFromId(furniId);
+            HFloorItem floorItem = floorState.furniFromId(furniId);
             if (floorItem != null) {
                 String furniName = furniDataTools.getFloorItemName(floorItem.getTypeId());
                 if (excludeFurniState == ExcludeFurniState.EXCLUDE) {
@@ -1225,17 +1256,17 @@ public class GBuildTools extends ExtensionForm {
 
 
     private void maybeReplaceTBones() {
-        boolean wasEnabled = roomFurniState.hasMappings();
+        boolean wasEnabled = floorState.hasMappings();
         boolean enabled = buildToolsEnabled() && furniDataReady() && ift_pizza_cbx.isSelected();
 
         if (wasEnabled != enabled) {
             if (enabled)
-                roomFurniState.addTypeIdMapper(furniDataTools, "petfood4", "pizza");
+                floorState.addTypeIdMapper(furniDataTools, "petfood4", "pizza");
             else
-                roomFurniState.removeTypeIdMapper(furniDataTools, "petfood4");
+                floorState.removeTypeIdMapper(furniDataTools, "petfood4");
 
-            if (roomFurniState.inRoom()) {
-                roomFurniState.heavyReload(this);
+            if (floorState.inRoom()) {
+                floorState.heavyReload(this);
                 latestTboneReq = System.currentTimeMillis();
                 new Thread(() -> {
                     Utils.sleep(RATELIMIT + 50);

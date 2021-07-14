@@ -12,7 +12,7 @@ import javafx.beans.InvalidationListener;
 
 import java.util.*;
 
-public class RoomFurniState {
+public class FloorState {
 
     private final Object lock = new Object();
 
@@ -25,9 +25,10 @@ public class RoomFurniState {
     private volatile Map<Integer, HFloorItem> furniIdToItem = null;
     private volatile Map<Integer, Set<HFloorItem>> typeIdToItems = null;
     private volatile List<List<Set<HFloorItem>>> furnimap = null;
+    private volatile char[][] floorplan = null;
 
 
-    public RoomFurniState(PacketInfoSupport packetInfoSupport, InvalidationListener onFurnisChange) {
+    public FloorState(PacketInfoSupport packetInfoSupport, InvalidationListener onFurnisChange) {
         this.onFurnisChange = onFurnisChange;
 
         packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "Objects", this::parseFloorItems);
@@ -40,8 +41,27 @@ public class RoomFurniState {
         packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "HeightMap", this::parseHeightmap);
         packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "HeightMapUpdate", this::heightmapUpdate);
 
+        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "FloorHeightMap", this::parseFloorPlan);
+
         packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "RoomEntryInfo", this::roomEntryInfo);
 
+    }
+
+    private void parseFloorPlan(HMessage hMessage) {
+        synchronized (lock) {
+            HPacket packet = hMessage.getPacket();
+            packet.readByte();
+            packet.readInteger();
+            String raw = packet.readString();
+            String[] split = raw.split("\r");
+            floorplan = new char[split[0].length()][];
+            for (int x = 0; x < split[0].length(); x++) {
+                floorplan[x] = new char[split.length];
+                for (int y = 0; y < split.length; y++) {
+                    floorplan[x][y] = split[y].charAt(x);
+                }
+            }
+        }
     }
 
     private void roomEntryInfo(HMessage hMessage) {
@@ -59,6 +79,7 @@ public class RoomFurniState {
             heightmap = null;
             furniIdToItem = null;
             furnimap = null;
+            floorplan = null;
             typeIdToItems = null;
             tweakedItems.clear();
         }
@@ -329,5 +350,13 @@ public class RoomFurniState {
         synchronized (lock) {
             return typeIdMapper.size() > 0;
         }
+    }
+
+    public char floorHeight(int x, int y) {
+        char result;
+        synchronized (lock) {
+            result = (floorplan != null && x < floorplan.length && y < floorplan[x].length) ? floorplan[x][y] : 'x';
+        }
+        return result;
     }
 }
