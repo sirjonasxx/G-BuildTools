@@ -128,10 +128,10 @@
                      <children>
                         <AnchorPane layoutX="18.0" layoutY="11.0" prefHeight="158.0" prefWidth="156.0" style="-fx-background-color: #f2f2f2; -fx-border-color: #ccc; -fx-background-radius: 5px; -fx-border-radius: 5px;">
                            <children>
-                              <Button fx:id="pm_loc_up_btn" disable="true" layoutX="59.0" layoutY="36.0" mnemonicParsing="false" onAction="#pm_loc_up_click" prefHeight="25.0" prefWidth="32.0" rotate="135.0" text="∟" />
-                              <Button fx:id="pm_loc_right_btn" disable="true" layoutX="86.0" layoutY="63.0" mnemonicParsing="false" onAction="#pm_loc_right_click" prefHeight="25.0" prefWidth="32.0" rotate="225.0" text="∟" />
-                              <Button fx:id="pm_loc_down_btn" disable="true" layoutX="59.0" layoutY="90.0" mnemonicParsing="false" onAction="#pm_loc_down_click" prefHeight="25.0" prefWidth="32.0" rotate="315.0" text="∟" />
-                              <Button fx:id="pm_loc_left_btn" disable="true" layoutX="32.0" layoutY="63.0" mnemonicParsing="false" onAction="#pm_loc_left_btn_click" prefHeight="25.0" prefWidth="32.0" rotate="45.0" text="∟" />
+                              <Button fx:id="pm_loc_up_btn" disable="true" layoutX="89.0" layoutY="43.0" mnemonicParsing="false" onAction="#pm_loc_up_click" prefHeight="25.0" prefWidth="42.0" rotate="150.0" text="⟵" />
+                              <Button fx:id="pm_loc_right_btn" disable="true" layoutX="89.0" layoutY="87.0" mnemonicParsing="false" onAction="#pm_loc_right_click" prefHeight="25.0" prefWidth="42.0" rotate="-150.0" text="⟵" />
+                              <Button fx:id="pm_loc_down_btn" disable="true" layoutX="18.0" layoutY="87.0" mnemonicParsing="false" onAction="#pm_loc_down_click" prefHeight="25.0" prefWidth="42.0" rotate="-30.0" text="⟵" />
+                              <Button fx:id="pm_loc_left_btn" disable="true" layoutX="18.0" layoutY="43.0" mnemonicParsing="false" onAction="#pm_loc_left_btn_click" prefHeight="25.0" prefWidth="42.0" rotate="30.0" text="⟵" />
                               <Label layoutX="13.0" layoutY="133.0" text="Step:" />
                               <RadioButton layoutX="45.0" layoutY="133.0" mnemonicParsing="false" selected="true" text="1">
                                  <toggleGroup>
@@ -188,19 +188,19 @@
                      <children>
                         <Hyperlink fx:id="readmeLink" layoutX="9.0" layoutY="147.0" text="Read the github README usage instructions" />
                         <CheckBox fx:id="always_on_top_cbx" layoutX="423.0" layoutY="143.0" mnemonicParsing="false" onAction="#toggleAlwaysOnTop" prefHeight="31.0" prefWidth="109.0" text="Always on top" />
-                        <AnchorPane layoutX="12.0" layoutY="12.0" prefHeight="54.0" prefWidth="309.0" style="-fx-border-color: #ccc; -fx-border-width: 1px;">
+                        <AnchorPane layoutX="12.0" layoutY="12.0" prefHeight="92.0" prefWidth="241.0" style="-fx-border-color: #ccc; -fx-border-width: 1px;">
                            <children>
                               <Label layoutX="11.0" layoutY="6.0" text="Ratelimit:" />
-                              <RadioButton layoutX="253.0" layoutY="29.0" mnemonicParsing="false" onAction="#rtlmt_fast" selected="true" text="Fast" textFill="#000000db">
-                                 <toggleGroup>
-                                    <ToggleGroup fx:id="tgl_ratelimit" />
-                                 </toggleGroup></RadioButton>
-                              <RadioButton layoutX="174.0" layoutY="29.0" mnemonicParsing="false" onAction="#rtlmt_medium" prefWidth="83.0" text="Medium" textFill="#000000db" toggleGroup="$tgl_ratelimit" />
-                              <RadioButton layoutX="115.0" layoutY="29.0" mnemonicParsing="false" onAction="#rtlmt_slow" text="Slow" textFill="#000000db" toggleGroup="$tgl_ratelimit" />
-                              <CheckBox fx:id="cbx_spam" layoutX="11.0" layoutY="27.0" mnemonicParsing="false" text="Spam mode" />
+                              <Slider fx:id="ratelimiter" layoutX="13.0" layoutY="29.0" prefHeight="14.0" prefWidth="219.0" />
+                              <CheckBox fx:id="cbx_spam" layoutX="11.0" layoutY="60.0" mnemonicParsing="false" onAction="#packetSpamEnableDisable" text="Packet spam:" textFill="#000000d6" />
+                              <Spinner fx:id="packet_spam_spinner" disable="true" editable="true" layoutX="144.0" layoutY="56.0" prefHeight="25.0" prefWidth="83.0">
+                                 <valueFactory>
+                                    <SpinnerValueFactory.IntegerSpinnerValueFactory amountToStepBy="1" initialValue="1" max="10" min="1" />
+                                 </valueFactory>
+                              </Spinner>
                            </children>
                         </AnchorPane>
-                        <Button layoutX="12.0" layoutY="79.0" mnemonicParsing="false" onAction="#reload_inv" text="Reload Inventory" />
+                        <Button layoutX="406.0" layoutY="12.0" mnemonicParsing="false" onAction="#reload_inv" text="Reload Inventory" />
                      </children></AnchorPane>
               </content>
            </Tab>

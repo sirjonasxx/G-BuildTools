@@ -12,12 +12,15 @@ import gearth.protocol.HMessage;
 import gearth.protocol.HPacket;
 import gearth.ui.GEarthController;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import room.RoomFurniState;
@@ -37,6 +40,11 @@ public class GBuildTools extends ExtensionForm {
 
     public CheckBox always_on_top_cbx;
     public Hyperlink readmeLink;
+
+    public Slider ratelimiter;
+    public Spinner<Integer> packet_spam_spinner;
+    public CheckBox cbx_spam;
+
 
     // G-BuildTools general elements
     public CheckBox enable_gbuildtools;
@@ -101,7 +109,6 @@ public class GBuildTools extends ExtensionForm {
     public Button pm_offset_right_btn;
     public Button pm_offset_down_btn;
     public Button pm_offset_left_btn;
-    public CheckBox cbx_spam;
 
     private volatile int RATELIMIT = 526;
     private volatile int STACKTILE_RATELIMIT = 16;
@@ -321,12 +328,19 @@ public class GBuildTools extends ExtensionForm {
         });
 
         // javafx spinner updates bugfix
-        Spinner[] spinners = {height_offset_spinner, flatten_height_spinner, override_rotation_spinner, grow_factor_spinner};
+        Spinner[] spinners = {height_offset_spinner, flatten_height_spinner, override_rotation_spinner, grow_factor_spinner, packet_spam_spinner};
         for(Spinner spinner : spinners) {
             spinner.focusedProperty().addListener((observable, oldValue, newValue) -> {
                 if (!newValue) spinner.increment(0); // won't change value, but will commit editor
             });
         }
+        ratelimiter.valueProperty().addListener((observable, oldValue, newValue) -> {
+            int val = newValue.intValue();
+
+            RATELIMIT = 526 + val;
+            STACKTILE_RATELIMIT = 16 + val;
+            MOVEFURNI_RATELIMIT = 30 + val;
+        });
 
 
         packetInfoSupport = new PacketInfoSupport(this);
@@ -362,7 +376,6 @@ public class GBuildTools extends ExtensionForm {
         packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "Chat", this::onUserChat);
         packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "MoveAvatar", this::onTileClick);
         packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "MoveObject", this::onMoveFurni);
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "ObjectUpdate", this::onObjectUpdate);
 
 
         // poster mover
@@ -706,54 +719,17 @@ public class GBuildTools extends ExtensionForm {
     }
 
 
-
-    private final HashMap<Integer, HFloorItem> latestFurniUpdates = new HashMap<>();
-
-
-    private void onObjectUpdate(HMessage hMessage) {
-        HFloorItem item = new HFloorItem(hMessage.getPacket());
-        synchronized (latestFurniUpdates) {
-            latestFurniUpdates.put(item.getId(), item);
-        }
-    }
-
-
-    private void moveFurni(int furniId, int delay, int x, int y, int rot, int expected_z) { //expected_z = z*100 or < 0 if doesn't matter
-        // ignore expected_z actually
-        synchronized (latestFurniUpdates) {
-            latestFurniUpdates.remove(furniId);
-        }
-
-        HFloorItem item;
-        int i = 0;
-        do {
+    private void moveFurni(int furniId, int delay, int x, int y, int rot, int expected_z) {
+        for (int i = 0; i < getBurstValue(); i++) {
             packetInfoSupport.sendToServer("MoveObject", furniId, x, y, rot);
             Utils.sleep(delay);
-
-            synchronized (latestFurniUpdates) {
-                item = latestFurniUpdates.get(furniId);
-            }
-            i++;
-        } while(item == null && i < 3 && cbx_spam.isSelected());
-    }
-
-
-    private void setStackHeight(int stackTileId, int delay, int z) {
-        synchronized (latestFurniUpdates) {
-            latestFurniUpdates.remove(stackTileId);
         }
-
-        HFloorItem item;
-        int i = 0;
-        do {
+    }
+    private void setStackHeight(int stackTileId, int delay, int z) {
+        for (int i = 0; i < getBurstValue(); i++) {
             packetInfoSupport.sendToServer("SetCustomStackingHeight", stackTileId, z);
             Utils.sleep(delay);
-
-            synchronized (latestFurniUpdates) {
-                item = latestFurniUpdates.get(stackTileId);
-            }
-            i++;
-        } while(item == null && i < 3 && cbx_spam.isSelected());
+        }
     }
 
     // furnimover
@@ -1296,30 +1272,6 @@ public class GBuildTools extends ExtensionForm {
     }
 
 
-
-
-//    private final static int RATELIMIT = 525;
-//    private final static int STACKTILE_RATELIMIT = 15;
-//    private final static int MOVEFURNI_RATELIMIT = 30;
-
-    public void rtlmt_medium(ActionEvent actionEvent) {
-        RATELIMIT = 536;
-        STACKTILE_RATELIMIT = 24;
-        MOVEFURNI_RATELIMIT = 48;
-    }
-    public void rtlmt_fast(ActionEvent actionEvent) {
-        RATELIMIT = 526;
-        STACKTILE_RATELIMIT = 16;
-        MOVEFURNI_RATELIMIT = 30;
-    }
-    public void rtlmt_slow(ActionEvent actionEvent) {
-        RATELIMIT = 546;
-        STACKTILE_RATELIMIT = 30;
-        MOVEFURNI_RATELIMIT = 46;
-    }
-
-
-
     private int locSteps() {
         return Integer.parseInt(((RadioButton)(pm_loc_tgl.getSelectedToggle())).getText());
     }
@@ -1395,4 +1347,14 @@ public class GBuildTools extends ExtensionForm {
 
         } catch (Exception ignore) { }
     }
+
+
+    public void packetSpamEnableDisable(ActionEvent actionEvent) {
+        packet_spam_spinner.setDisable(!cbx_spam.isSelected());
+    }
+
+    private int getBurstValue() {
+        return cbx_spam.isSelected() ? packet_spam_spinner.getValue() : 1;
+    }
+
 }
