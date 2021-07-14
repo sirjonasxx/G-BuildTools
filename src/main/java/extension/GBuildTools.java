@@ -32,7 +32,7 @@ import java.util.function.Predicate;
 @ExtensionInfo(
         Title =  "G-BuildTools",
         Description =  "For all your building needs",
-        Version =  "1.0.1",
+        Version =  "1.1",
         Author =  "sirjonasxx"
 )
 public class GBuildTools extends ExtensionForm {
@@ -205,7 +205,7 @@ public class GBuildTools extends ExtensionForm {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("gbuildtools.fxml"));
         Parent root = loader.load();
 
-        stage.setTitle("G-BuildTools 1.0");
+        stage.setTitle("G-BuildTools 1.1");
         stage.setScene(new Scene(root));
         stage.getScene().getStylesheets().add(GEarthController.class.getResource("/gearth/ui/bootstrap3.css").toExternalForm());
         stage.getIcons().add(new Image(Main.class.getResourceAsStream("G-EarthLogoSmaller.png")));
