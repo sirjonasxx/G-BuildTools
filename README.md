@@ -4,7 +4,7 @@
 
 G-BuildTools is an advanced G-Earth extension that attempts to compensate all Habbo's shortcomings when it comes to building experience. It currently contains 6 features
 
-* If you have an instable connection, it is recommended to set your ratelimit lower in _Settings_: ![image](https://user-images.githubusercontent.com/36828922/125194599-46ec0280-e252-11eb-8b70-bcdc541b8e25.png)
+* If you have an instable connection or experience furni not being moved, it is recommended to adjust your ratelimiter in _Settings_: ![image](https://user-images.githubusercontent.com/36828922/125685672-5ff87d7d-2fee-4928-827b-aa336ae4514b.png)
 * Do not forget to **enable** the extension before using it
 
 Youtube demo's:
