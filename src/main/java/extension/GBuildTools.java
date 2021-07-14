@@ -739,24 +739,6 @@ public class GBuildTools extends ExtensionForm {
             return Arrays.stream(offsets).filter(
                     o1 -> Arrays.stream(offsets).map(o2 -> floorState.floorHeight(x + o1[0] - o2[0], y + o1[1] - o2[1])).distinct().count() == 1)
                     .findFirst().map(l -> new HPoint(l[0], l[1])).orElse(new HPoint(-1, -1));
-
-
-//            int[][] potentialOffsets = {{0, 0}, {-1, 0}, {0, -1}, {-1, -1}};
-//            for (int[] offsets : potentialOffsets) {
-//                int xOffset = offsets[0];
-//                int yOffset = offsets[1];
-//
-//                boolean valid = true;
-//                for (int x2 = x + xOffset; x2 < x + xOffset + 2; x2++) {
-//                    for (int y2 = y + xOffset; y2 < y + yOffset + 2; y2++) {
-//                        if (floorState.floorHeight(x2, y2) != tileHeight) {
-//                            valid = false;
-//                        }
-//                    }
-//                }
-//                if (valid) return new HPoint(x + xOffset, y + yOffset);
-//            }
-
         }
 
         return new HPoint(-1, -1);
