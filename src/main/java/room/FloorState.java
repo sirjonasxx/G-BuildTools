@@ -355,7 +355,8 @@ public class FloorState {
     public char floorHeight(int x, int y) {
         char result;
         synchronized (lock) {
-            result = (floorplan != null && x < floorplan.length && y < floorplan[x].length) ? floorplan[x][y] : 'x';
+            result = (floorplan != null && x >= 0 && y >= 0 &&
+                    x < floorplan.length && y < floorplan[x].length) ? floorplan[x][y] : 'x';
         }
         return result;
     }
