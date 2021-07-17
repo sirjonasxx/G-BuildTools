@@ -24,7 +24,7 @@ public class FloorState {
     private volatile int[][] heightmap = null; // 256 * 256
     private volatile Map<Integer, HFloorItem> furniIdToItem = null;
     private volatile Map<Integer, Set<HFloorItem>> typeIdToItems = null;
-    private volatile List<List<Set<HFloorItem>>> furnimap = null;
+    private volatile List<List<Map<Integer, HFloorItem>>> furnimap = null;
     private volatile char[][] floorplan = null;
 
 
@@ -137,7 +137,7 @@ public class FloorState {
                 for (int i = 0; i < 130; i++) {
                     furnimap.add(new ArrayList<>());
                     for (int j = 0; j < 130; j++) {
-                        furnimap.get(i).add(new HashSet<>());
+                        furnimap.get(i).add(new HashMap<>());
                     }
                 }
             }
@@ -149,7 +149,7 @@ public class FloorState {
                     mustReplace = true;
                 }
 
-                furnimap.get(item.getTile().getX()).get(item.getTile().getY()).add(item);
+                furnimap.get(item.getTile().getX()).get(item.getTile().getY()).put(item.getId(), item);
                 furniIdToItem.put(item.getId(), item);
                 if (!typeIdToItems.containsKey(item.getTypeId())) {
                     typeIdToItems.put(item.getTypeId(), new HashSet<>());
@@ -178,7 +178,7 @@ public class FloorState {
         synchronized (lock) {
             HFloorItem item = furniIdToItem.remove(furniId);
             if (item != null) {
-                furnimap.get(item.getTile().getX()).get(item.getTile().getY()).remove(item);
+                furnimap.get(item.getTile().getX()).get(item.getTile().getY()).remove(item.getId());
                 typeIdToItems.get(item.getTypeId()).remove(item);
             }
             tweakedItems.remove(furniId);
@@ -205,7 +205,7 @@ public class FloorState {
                 tweakedItems.add(item.getId());
             }
 
-            furnimap.get(item.getTile().getX()).get(item.getTile().getY()).add(item);
+            furnimap.get(item.getTile().getX()).get(item.getTile().getY()).put(item.getId(), item);
             furniIdToItem.put(item.getId(), item);
             if (!typeIdToItems.containsKey(item.getTypeId())) {
                 typeIdToItems.put(item.getTypeId(), new HashSet<>());
@@ -246,9 +246,9 @@ public class FloorState {
 
                     HFloorItem item = furniIdToItem.get(furniId);
                     if (item != null) {
-                        furnimap.get(item.getTile().getX()).get(item.getTile().getY()).remove(item);
+                        furnimap.get(item.getTile().getX()).get(item.getTile().getY()).remove(item.getId());
                         item.setTile(new HPoint(newx, newy, Double.parseDouble(newz)));
-                        furnimap.get(newx).get(newy).add(item);
+                        furnimap.get(newx).get(newy).put(item.getId(), item);
                     }
                 }
             }
@@ -290,7 +290,7 @@ public class FloorState {
     public List<HFloorItem> getFurniOnTile(int x, int y) {
         synchronized (lock) {
             if (inRoom()) {
-                return new ArrayList<>(furnimap.get(x).get(y));
+                return new ArrayList<>(furnimap.get(x).get(y).values());
             }
         }
         return new ArrayList<>();
