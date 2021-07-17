@@ -129,13 +129,16 @@ public class FloorState {
         HFloorItem[] floorItems = HFloorItem.parse(hMessage.getPacket());
 
         synchronized (lock) {
-            furniIdToItem = new HashMap<>();
-            furnimap = new ArrayList<>();
-            typeIdToItems = new HashMap<>();
-            for (int i = 0; i < 130; i++) {
-                furnimap.add(new ArrayList<>());
-                for (int j = 0; j < 130; j++) {
-                    furnimap.get(i).add(new HashSet<>());
+            if (furnimap == null) {
+                furniIdToItem = new HashMap<>();
+                furnimap = new ArrayList<>();
+                typeIdToItems = new HashMap<>();
+
+                for (int i = 0; i < 130; i++) {
+                    furnimap.add(new ArrayList<>());
+                    for (int j = 0; j < 130; j++) {
+                        furnimap.get(i).add(new HashSet<>());
+                    }
                 }
             }
 
