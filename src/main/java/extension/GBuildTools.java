@@ -32,7 +32,7 @@ import java.util.function.Predicate;
 @ExtensionInfo(
         Title =  "G-BuildTools",
         Description =  "For all your building needs",
-        Version =  "1.1",
+        Version =  "1.1.1",
         Author =  "sirjonasxx"
 )
 public class GBuildTools extends ExtensionForm {
