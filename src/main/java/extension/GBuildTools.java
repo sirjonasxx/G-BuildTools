@@ -1,33 +1,22 @@
 package extension;
 
 import furnidata.FurniDataTools;
-import gearth.Main;
 import gearth.extensions.ExtensionForm;
-import gearth.extensions.ExtensionFormLauncher;
 import gearth.extensions.ExtensionInfo;
-import gearth.extensions.extra.tools.PacketInfoSupport;
 import gearth.extensions.parsers.HFloorItem;
 import gearth.extensions.parsers.HPoint;
 import gearth.protocol.HMessage;
 import gearth.protocol.HPacket;
-import gearth.ui.GEarthController;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
 import javafx.scene.paint.Paint;
-import javafx.stage.Stage;
 import room.FloorState;
 import stuff.*;
 import utils.Utils;
 import utils.Wrapper;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 @ExtensionInfo(
         Title =  "G-BuildTools",
@@ -113,7 +102,6 @@ public class GBuildTools extends ExtensionForm {
     private volatile int STACKTILE_RATELIMIT = 16;
     private volatile int MOVEFURNI_RATELIMIT = 30;
 
-    private PacketInfoSupport packetInfoSupport = null;
     private FurniDataTools furniDataTools = null;
 
     private FloorState floorState = null;
@@ -151,7 +139,7 @@ public class GBuildTools extends ExtensionForm {
     }
 
     public void reload_inv(ActionEvent actionEvent) {
-        packetInfoSupport.sendToServer("RequestFurniInventory");
+        sendToServer(new HPacket("RequestFurniInventory", HMessage.Direction.TOSERVER));
     }
 
 
@@ -194,26 +182,6 @@ public class GBuildTools extends ExtensionForm {
     // poster mover
     private volatile WallFurniInfo latestWallFurniMovement = null;
     private volatile boolean updateLocationStringUI = false;
-
-
-    public static void main(String[] args) {
-        ExtensionFormLauncher.trigger(GBuildTools.class, args);
-    }
-
-    @Override
-    public ExtensionForm launchForm(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("gbuildtools.fxml"));
-        Parent root = loader.load();
-
-        stage.setTitle("G-BuildTools 1.1");
-        stage.setScene(new Scene(root));
-        stage.getScene().getStylesheets().add(GEarthController.class.getResource("/gearth/ui/bootstrap3.css").toExternalForm());
-        stage.getIcons().add(new Image(Main.class.getResourceAsStream("G-EarthLogoSmaller.png")));
-
-        stage.setResizable(false);
-
-        return loader.getController();
-    }
 
     @Override
     protected void onShow() {
@@ -342,45 +310,43 @@ public class GBuildTools extends ExtensionForm {
         });
 
 
-        packetInfoSupport = new PacketInfoSupport(this);
+        floorState = new FloorState(this, o -> updateUI());
 
-        floorState = new FloorState(packetInfoSupport, o -> updateUI());
-
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "CloseConnection", m -> reset());
-        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "Quit", m -> reset());
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "RoomReady", m -> reset());
+        intercept(HMessage.Direction.TOCLIENT, "CloseConnection", m -> reset());
+        intercept(HMessage.Direction.TOSERVER, "Quit", m -> reset());
+        intercept(HMessage.Direction.TOCLIENT, "RoomReady", m -> reset());
 
         // quickdrop furni
         new Thread(this::dropFurniLoop).start();
-        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "PlaceObject", this::onFurniPlace);
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "FurniListRemove", this::inventoryFurniRemove); // flash only
+        intercept(HMessage.Direction.TOSERVER, "PlaceObject", this::onFurniPlace);
+        intercept(HMessage.Direction.TOCLIENT, "FurniListRemove", this::inventoryFurniRemove); // flash only
 
         // wired duplicator
         new Thread(() -> wiredSaveLoop(delayedConditionSave, last_condition)).start();
         new Thread(() -> wiredSaveLoop(delayedTriggerSave, last_trigger)).start();
         new Thread(() -> wiredSaveLoop(delayedEffectSave, last_effect)).start();
-        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "UpdateCondition", this::updateWiredCondition);
-        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "UpdateTrigger", this::updateWiredTrigger);
-        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "UpdateAction", this::updateWiredEffect);
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "Open", this::onOpenWired);
+        intercept(HMessage.Direction.TOSERVER, "UpdateCondition", this::updateWiredCondition);
+        intercept(HMessage.Direction.TOSERVER, "UpdateTrigger", this::updateWiredTrigger);
+        intercept(HMessage.Direction.TOSERVER, "UpdateAction", this::updateWiredEffect);
+        intercept(HMessage.Direction.TOCLIENT, "Open", this::onOpenWired);
 
 
         // Stacktile tools
         new Thread(this::stackTileLoop).start();
-        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "SetCustomStackingHeight", this::setStackHeight);
+        intercept(HMessage.Direction.TOSERVER, "SetCustomStackingHeight", this::setStackHeight);
 
 
         // furni mover
         new Thread(this::furniMoveLoop).start();
-        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "Chat", this::onUserChat);
-        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "MoveAvatar", this::onTileClick);
-        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "MoveObject", this::onMoveFurni);
+        intercept(HMessage.Direction.TOSERVER, "Chat", this::onUserChat);
+        intercept(HMessage.Direction.TOSERVER, "MoveAvatar", this::onTileClick);
+        intercept(HMessage.Direction.TOSERVER, "MoveObject", this::onMoveFurni);
 
 
         // poster mover
         // {out:MoveWallItem}{i:10616766}{s:":w=0,5 l=4,29 l"}
-        packetInfoSupport.intercept(HMessage.Direction.TOSERVER, "MoveWallItem", this::onMoveWallItem);
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "ItemUpdate", this::posterMoved);
+        intercept(HMessage.Direction.TOSERVER, "MoveWallItem", this::onMoveWallItem);
+        intercept(HMessage.Direction.TOCLIENT, "ItemUpdate", this::posterMoved);
 
         floorState.requestRoom(this);
 
@@ -452,13 +418,13 @@ public class GBuildTools extends ExtensionForm {
 
                 if (furniId < 0) {
                     // floor furni
-                    packetInfoSupport.sendToClient("ObjectRemove",
-                            -dropInfo.getTempFurniId() + "", false, 0, 0);
+                    sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT,
+                            -dropInfo.getTempFurniId() + "", false, 0, 0));
                 }
                 else {
                     // wall furni
-                    packetInfoSupport.sendToClient("ItemRemove",
-                            dropInfo.getTempFurniId() + "", 0);
+                    sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT,
+                            dropInfo.getTempFurniId() + "", 0));
                 }
 
 
@@ -477,12 +443,12 @@ public class GBuildTools extends ExtensionForm {
                 for (long id : toRemove) {
                     DropInfo dropInfo2 = awaitDropConfirmation.remove(id);
                     if (id < 0) {
-                        packetInfoSupport.sendToClient("ObjectRemove",
-                                -dropInfo2.getTempFurniId() + "", false, 0, 0);
+                        sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT,
+                                -dropInfo2.getTempFurniId() + "", false, 0, 0));
                     }
                     else {
-                        packetInfoSupport.sendToClient("ItemRemove",
-                                dropInfo2.getTempFurniId() + "", 0);
+                        sendToClient(new HPacket("ItemRemove", HMessage.Direction.TOCLIENT,
+                                dropInfo2.getTempFurniId() + "", 0));
                     }
                 }
 
@@ -533,11 +499,11 @@ public class GBuildTools extends ExtensionForm {
             dropInfo.setRotation(override_rotation_spinner.getValue());
         }
 
-        packetInfoSupport.sendToClient("ObjectAdd", -(int)dropInfo.getTempFurniId(),
-                0, dropInfo.getX(), dropInfo.getY(), dropInfo.getRotation(), height + "", "0.0", 0, 0, "", -1, 0, 0, "");
+        sendToClient(new HPacket("ObjectAdd", HMessage.Direction.TOCLIENT, -(int)dropInfo.getTempFurniId(),
+                0, dropInfo.getX(), dropInfo.getY(), dropInfo.getRotation(), height + "", "0.0", 0, 0, "", -1, 0, 0, ""));
 
         int flashFurniId = (int)dropInfo.getFurniId();
-        packetInfoSupport.sendToClient("FurniListRemove", flashFurniId);
+        sendToClient(new HPacket("FurniListRemove", HMessage.Direction.TOCLIENT, flashFurniId));
     }
     private void onWallFurniPlace(WallFurniDropInfo dropInfo) {
         synchronized (delayedWallFurniDrop) {
@@ -548,11 +514,11 @@ public class GBuildTools extends ExtensionForm {
                 dropInfo.getxOffset(), dropInfo.getyOffset(), dropInfo.isLeft()
         );
 
-        packetInfoSupport.sendToClient("ItemAdd", temp.getFurniId() + "", 4001,
-                temp.moveString(), "", -1, 0, 0, "");
+        sendToClient(new HPacket("ItemAdd", HMessage.Direction.TOCLIENT, temp.getFurniId() + "", 4001,
+                temp.moveString(), "", -1, 0, 0, ""));
 
         int flashFurniId = (int)dropInfo.getFurniId();
-        packetInfoSupport.sendToClient("FurniListRemove", flashFurniId);
+        sendToClient(new HPacket("FurniListRemove", HMessage.Direction.TOCLIENT, flashFurniId));
     }
     private void dropFurniLoop() {
         while (true) {
@@ -576,7 +542,7 @@ public class GBuildTools extends ExtensionForm {
                         delayedFloorDrop.getY(),
                         delayedFloorDrop.getRotation()
                 );
-                packetInfoSupport.sendToServer("PlaceObject", packetString);
+                sendToServer(new HPacket("PlaceObject", HMessage.Direction.TOSERVER, packetString));
 
                 delayedFloorDrop.setDropTimeStamp(System.currentTimeMillis());
                 synchronized (awaitDropConfirmation) {
@@ -587,7 +553,7 @@ public class GBuildTools extends ExtensionForm {
             }
             if (delayedWallDrop != null) {
                 String packetString = delayedWallDrop.placeString();
-                packetInfoSupport.sendToServer("PlaceObject", packetString);
+                sendToServer(new HPacket("PlaceObject", HMessage.Direction.TOSERVER, packetString));
 
                 delayedWallDrop.setDropTimeStamp(System.currentTimeMillis());
                 synchronized (awaitDropConfirmation) {
@@ -688,7 +654,7 @@ public class GBuildTools extends ExtensionForm {
             }
 
             if (stackTile != null) {
-                packetInfoSupport.sendToServer("SetCustomStackingHeight", stackTile.getId(), stacktileheight);
+                sendToServer(new HPacket("SetCustomStackingHeight", HMessage.Direction.TOSERVER, stackTile.getId(), stacktileheight));
                 Utils.sleep(STACKTILE_RATELIMIT);
             }
             else {
@@ -720,13 +686,13 @@ public class GBuildTools extends ExtensionForm {
 
     private void moveFurni(int furniId, int delay, int x, int y, int rot, int expected_z) {
         for (int i = 0; i < getBurstValue(); i++) {
-            packetInfoSupport.sendToServer("MoveObject", furniId, x, y, rot);
+            sendToServer(new HPacket("MoveObject", HMessage.Direction.TOSERVER, furniId, x, y, rot));
             Utils.sleep(delay);
         }
     }
     private void setStackHeight(int stackTileId, int delay, int z) {
         for (int i = 0; i < getBurstValue(); i++) {
-            packetInfoSupport.sendToServer("SetCustomStackingHeight", stackTileId, z);
+            sendToServer(new HPacket("SetCustomStackingHeight", HMessage.Direction.TOSERVER , stackTileId, z));
             Utils.sleep(delay);
         }
     }
@@ -746,7 +712,7 @@ public class GBuildTools extends ExtensionForm {
     // furnimover
     private void furniMoverSendInfo(String text) {
         if (fm_cbx_visualhelp.isSelected()) {
-            packetInfoSupport.sendToClient("Whisper", -1, text, 0, 30, 0, -1);
+            sendToClient(new HPacket("Whisper", HMessage.Direction.TOCLIENT, -1, text, 0, 30, 0, -1));
         }
     }
     private void furniMoveLoop() {
@@ -1233,7 +1199,7 @@ public class GBuildTools extends ExtensionForm {
         }
     }
     private void movePoster(WallFurniInfo newWallFurniInfo) {
-        packetInfoSupport.sendToServer("MoveWallItem", (int)(newWallFurniInfo.getFurniId()), newWallFurniInfo.moveString());
+        sendToServer(new HPacket("MoveWallItem", HMessage.Direction.TOSERVER, (int)(newWallFurniInfo.getFurniId()), newWallFurniInfo.moveString()));
     }
 
 
@@ -1266,10 +1232,6 @@ public class GBuildTools extends ExtensionForm {
         updateUI();
     }
 
-
-    public PacketInfoSupport getPacketInfoSupport() {
-        return packetInfoSupport;
-    }
 
     public FurniDataTools getFurniDataTools() {
         return furniDataTools;

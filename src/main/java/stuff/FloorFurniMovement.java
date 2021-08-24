@@ -1,6 +1,9 @@
 package stuff;
 
-import gearth.extensions.extra.tools.PacketInfoSupport;
+
+import gearth.extensions.IExtension;
+import gearth.protocol.HMessage;
+import gearth.protocol.HPacket;
 
 public class FloorFurniMovement {
 
@@ -33,12 +36,12 @@ public class FloorFurniMovement {
         this.useStacktileId = useStacktileId;
     }
 
-    public void perform(PacketInfoSupport packetInfoSupport) {
-        packetInfoSupport.sendToServer("MoveObject", furniId, newX, newY, newRot);
+    public void perform(IExtension extension) {
+        extension.sendToServer(new HPacket("MoveObject", HMessage.Direction.TOSERVER, furniId, newX, newY, newRot));
     }
 
-    public void undo(PacketInfoSupport packetInfoSupport) {
-        packetInfoSupport.sendToServer("MoveObject", furniId, oldX, oldY, oldRot);
+    public void undo(IExtension extension) {
+        extension.sendToServer(new HPacket("MoveObject", HMessage.Direction.TOSERVER, furniId, oldX, oldY, oldRot));
     }
 
     public int getFurniId() {

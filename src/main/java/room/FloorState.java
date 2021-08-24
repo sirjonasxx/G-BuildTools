@@ -1,9 +1,8 @@
 package room;
 
 import furnidata.FurniDataTools;
-import gearth.extensions.Extension;
 import gearth.extensions.ExtensionBase;
-import gearth.extensions.extra.tools.PacketInfoSupport;
+import gearth.extensions.IExtension;
 import gearth.extensions.parsers.HFloorItem;
 import gearth.extensions.parsers.HPoint;
 import gearth.protocol.HMessage;
@@ -28,22 +27,22 @@ public class FloorState {
     private volatile char[][] floorplan = null;
 
 
-    public FloorState(PacketInfoSupport packetInfoSupport, InvalidationListener onFurnisChange) {
+    public FloorState(IExtension extension, InvalidationListener onFurnisChange) {
         this.onFurnisChange = onFurnisChange;
 
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "Objects", this::parseFloorItems);
+        extension.intercept(HMessage.Direction.TOCLIENT, "Objects", this::parseFloorItems);
 
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "ObjectAdd", this::onObjectAdd);
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "ObjectRemove", this::onObjectRemove);
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "ObjectUpdate", this::onObjectUpdate);
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "SlideObjectBundle", this::onObjectMove);
+        extension.intercept(HMessage.Direction.TOCLIENT, "ObjectAdd", this::onObjectAdd);
+        extension.intercept(HMessage.Direction.TOCLIENT, "ObjectRemove", this::onObjectRemove);
+        extension.intercept(HMessage.Direction.TOCLIENT, "ObjectUpdate", this::onObjectUpdate);
+        extension.intercept(HMessage.Direction.TOCLIENT, "SlideObjectBundle", this::onObjectMove);
 
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "HeightMap", this::parseHeightmap);
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "HeightMapUpdate", this::heightmapUpdate);
+        extension.intercept(HMessage.Direction.TOCLIENT, "HeightMap", this::parseHeightmap);
+        extension.intercept(HMessage.Direction.TOCLIENT, "HeightMapUpdate", this::heightmapUpdate);
 
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "FloorHeightMap", this::parseFloorPlan);
+        extension.intercept(HMessage.Direction.TOCLIENT, "FloorHeightMap", this::parseFloorPlan);
 
-        packetInfoSupport.intercept(HMessage.Direction.TOCLIENT, "RoomEntryInfo", this::roomEntryInfo);
+        extension.intercept(HMessage.Direction.TOCLIENT, "RoomEntryInfo", this::roomEntryInfo);
 
     }
 
