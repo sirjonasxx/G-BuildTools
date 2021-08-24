@@ -56,7 +56,7 @@
                         <AnchorPane layoutX="323.0" layoutY="98.0" prefHeight="70.0" prefWidth="204.0" style="-fx-border-color: grey; -fx-border-radius: 3px;">
                            <children>
                               <Label layoutX="52.0" layoutY="-8.0" style="-fx-background-color: white;" text="Invisible furni tools" />
-                              <CheckBox fx:id="ift_pizza_cbx" disable="true" layoutX="12.0" layoutY="12.0" mnemonicParsing="false" onAction="#tbones_tgl" prefHeight="53.0" prefWidth="179.0" text="Display T-Bones as pizza boxes" textFill="#000000d6" wrapText="true" />
+                              <CheckBox fx:id="ift_pizza_cbx" disable="true" layoutX="12.0" layoutY="12.0" mnemonicParsing="false" onAction="#tbones_tgl" prefHeight="53.0" prefWidth="171.0" text="Display invisible furni as other furniture" textFill="#000000d6" wrapText="true" />
                            </children>
                         </AnchorPane>
                      </children></AnchorPane>

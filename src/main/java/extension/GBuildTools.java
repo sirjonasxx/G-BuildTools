@@ -21,7 +21,7 @@ import java.util.*;
 @ExtensionInfo(
         Title =  "G-BuildTools",
         Description =  "For all your building needs",
-        Version =  "1.1.1",
+        Version =  "1.2",
         Author =  "sirjonasxx"
 )
 public class GBuildTools extends ExtensionForm {
@@ -1208,10 +1208,18 @@ public class GBuildTools extends ExtensionForm {
         boolean enabled = buildToolsEnabled() && furniDataReady() && ift_pizza_cbx.isSelected();
 
         if (wasEnabled != enabled) {
-            if (enabled)
-                floorState.addTypeIdMapper(furniDataTools, "petfood4", "pizza");
-            else
-                floorState.removeTypeIdMapper(furniDataTools, "petfood4");
+            List<String> invisibleFurni = Arrays.asList("petfood4", "s_snowball_machine", "wf_blob", "wf_blob2",
+                    "wf_blob_invis", "wf_blob2_vis");
+
+            if (enabled) {
+                invisibleFurni.forEach(f -> floorState.addTypeIdMapper(furniDataTools, f, "pizza"));
+                floorState.addTypeIdMapper(furniDataTools, "room_invisible_block", "antique_c21_magnifyinglass");
+            }
+            else {
+                invisibleFurni.forEach(f -> floorState.removeTypeIdMapper(furniDataTools, f));
+                floorState.removeTypeIdMapper(furniDataTools, "room_invisible_block");
+            }
+
 
             if (floorState.inRoom()) {
                 floorState.heavyReload(this);
