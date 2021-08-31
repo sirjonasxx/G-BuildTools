@@ -98,6 +98,8 @@ public class GBuildTools extends ExtensionForm {
     public Button pm_offset_down_btn;
     public Button pm_offset_left_btn;
 
+    private static final int ratelimitStartOffset = 15;
+
     private volatile int RATELIMIT = 526;
     private volatile int STACKTILE_RATELIMIT = 16;
     private volatile int MOVEFURNI_RATELIMIT = 30;
@@ -303,11 +305,12 @@ public class GBuildTools extends ExtensionForm {
         }
         ratelimiter.valueProperty().addListener((observable, oldValue, newValue) -> {
             int val = newValue.intValue();
-
             RATELIMIT = 526 + val;
             STACKTILE_RATELIMIT = 16 + val;
             MOVEFURNI_RATELIMIT = 30 + val;
         });
+
+        ratelimiter.valueProperty().setValue(ratelimitStartOffset);
 
 
         floorState = new FloorState(this, o -> updateUI());
@@ -783,7 +786,7 @@ public class GBuildTools extends ExtensionForm {
                     }
 
                     if (latestStackMove == null || !latestStackMove.equals(new HPoint(stackLoc.getX(), stackLoc.getY(), z))) {
-                        setStackHeight(stacktileId, MOVEFURNI_RATELIMIT/2, z);
+                        setStackHeight(stacktileId, (MOVEFURNI_RATELIMIT*2)/3, z);
                     }
                     latestStackMove = new HPoint(stackLoc.getX(), stackLoc.getY(), z);
                 }
@@ -972,7 +975,6 @@ public class GBuildTools extends ExtensionForm {
                 if (maybe2 == 0) {
                     int maybe3 = Integer.compare(o1.getOldX(), o2.getOldX());
                     if (maybe3 == 0) {
-                        // todo wired ordering?
                         return Integer.compare(o1.getOldZ(), o2.getOldZ());
                     }
                     return maybe3;
@@ -1208,16 +1210,18 @@ public class GBuildTools extends ExtensionForm {
         boolean enabled = buildToolsEnabled() && furniDataReady() && ift_pizza_cbx.isSelected();
 
         if (wasEnabled != enabled) {
-            List<String> invisibleFurni = Arrays.asList("petfood4", "s_snowball_machine", "wf_blob", "wf_blob2",
+            List<String> invisibleFurni1State = Arrays.asList("petfood4", "s_snowball_machine", "wf_blob", "wf_blob2",
                     "wf_blob_invis", "wf_blob2_vis");
 
+            List<String> invisibleFurni2States = Arrays.asList("room_invisible_block", "tile_fxprovider_nfs", "room_wl15_infolink");
+
             if (enabled) {
-                invisibleFurni.forEach(f -> floorState.addTypeIdMapper(furniDataTools, f, "pizza"));
-                floorState.addTypeIdMapper(furniDataTools, "room_invisible_block", "antique_c21_magnifyinglass");
+                invisibleFurni1State.forEach(f -> floorState.addTypeIdMapper(furniDataTools, f, "pizza"));
+                invisibleFurni2States.forEach(f -> floorState.addTypeIdMapper(furniDataTools, f, "antique_c21_magnifyinglass"));
             }
             else {
-                invisibleFurni.forEach(f -> floorState.removeTypeIdMapper(furniDataTools, f));
-                floorState.removeTypeIdMapper(furniDataTools, "room_invisible_block");
+                invisibleFurni1State.forEach(f -> floorState.removeTypeIdMapper(furniDataTools, f));
+                invisibleFurni2States.forEach(f -> floorState.removeTypeIdMapper(furniDataTools, f));
             }
 
 
