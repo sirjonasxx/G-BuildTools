@@ -1,6 +1,6 @@
 # G-BuildTools
 
-**NOTE: Get the extension from the G-ExtensionStore in G-Earth 1.5+, and not from the /releases in github**
+**NOTE: Get the latest version from the G-ExtensionStore in G-Earth 1.5+, and not from the /releases in github**
 
 **NOTE 2: Report bugs [here](https://github.com/sirjonasxx/G-BuildTools/issues) and check this page regularly for updates**
 
