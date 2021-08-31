@@ -21,7 +21,7 @@ import java.util.*;
 @ExtensionInfo(
         Title =  "G-BuildTools",
         Description =  "For all your building needs",
-        Version =  "1.2",
+        Version =  "1.2.1",
         Author =  "sirjonasxx"
 )
 public class GBuildTools extends ExtensionForm {
@@ -322,7 +322,9 @@ public class GBuildTools extends ExtensionForm {
         // quickdrop furni
         new Thread(this::dropFurniLoop).start();
         intercept(HMessage.Direction.TOSERVER, "PlaceObject", this::onFurniPlace);
-        intercept(HMessage.Direction.TOCLIENT, "FurniListRemove", this::inventoryFurniRemove); // flash only
+        intercept(HMessage.Direction.TOCLIENT, "FurniListRemove", this::inventoryFurniRemove);
+        intercept(HMessage.Direction.TOSERVER, "BuildersClubPlaceRoomItem", this::buildersClubItemPlace);
+
 
         // wired duplicator
         new Thread(() -> wiredSaveLoop(delayedConditionSave, last_condition)).start();
@@ -507,6 +509,22 @@ public class GBuildTools extends ExtensionForm {
 
         int flashFurniId = (int)dropInfo.getFurniId();
         sendToClient(new HPacket("FurniListRemove", HMessage.Direction.TOCLIENT, flashFurniId));
+    }
+    private void buildersClubItemPlace(HMessage hMessage) {
+        if (buildToolsEnabled()) {
+
+            HPacket packet = hMessage.getPacket();
+
+            if (override_rotation_cbx.isSelected()) {
+                packet.readInteger();
+                packet.readInteger();
+                packet.readString();
+                packet.readInteger();
+                packet.readInteger();
+                packet.replaceInt(packet.getReadIndex(), override_rotation_spinner.getValue());
+            }
+
+        }
     }
     private void onWallFurniPlace(WallFurniDropInfo dropInfo) {
         synchronized (delayedWallFurniDrop) {
