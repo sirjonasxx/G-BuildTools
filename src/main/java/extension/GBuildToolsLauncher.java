@@ -18,8 +18,8 @@ public class GBuildToolsLauncher extends ExtensionFormCreator {
 
         stage.setTitle("G-BuildTools 1.2");
         stage.setScene(new Scene(root));
-        stage.getScene().getStylesheets().add(GEarthController.class.getResource("/gearth/ui/bootstrap3.css").toExternalForm());
-        stage.getIcons().add(new Image(Main.class.getResourceAsStream("G-EarthLogoSmaller.png")));
+        stage.getScene().getStylesheets().add(GEarthController.class.getResource("/gearth/themes/G-Earth/styling.css").toExternalForm());
+        stage.getIcons().add(new Image(Main.class.getResourceAsStream("/gearth/themes/G-Earth/logoSmall.png")));
 
         stage.setResizable(false);
 

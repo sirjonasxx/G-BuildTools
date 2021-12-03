@@ -4,6 +4,7 @@ package stuff;
 import gearth.extensions.IExtension;
 import gearth.protocol.HMessage;
 import gearth.protocol.HPacket;
+import room.StackTileInfo;
 
 public class FloorFurniMovement {
 
@@ -20,9 +21,10 @@ public class FloorFurniMovement {
     private final int oldZ;
     private final int newZ;
 
-    private final int useStacktileId;
+    private StackTileInfo stackTileInfo;
+    private StackTileInfo undoStackInfo;
 
-    public FloorFurniMovement(int typeId, int furniId, int oldX, int oldY, int oldRot, int newX, int newY, int newRot, int oldZ, int newZ, int useStacktileId) {
+    public FloorFurniMovement(int typeId, int furniId, int oldX, int oldY, int oldRot, int newX, int newY, int newRot, int oldZ, int newZ, StackTileInfo stackTileInfo, StackTileInfo undoStackInfo) {
         this.typeId = typeId;
         this.furniId = furniId;
         this.oldX = oldX;
@@ -33,7 +35,8 @@ public class FloorFurniMovement {
         this.newRot = newRot;
         this.oldZ = oldZ;
         this.newZ = newZ;
-        this.useStacktileId = useStacktileId;
+        this.stackTileInfo = stackTileInfo;
+        this.undoStackInfo = undoStackInfo;
     }
 
     public void perform(IExtension extension) {
@@ -72,8 +75,8 @@ public class FloorFurniMovement {
         return newRot;
     }
 
-    public int useStacktileId() {
-        return useStacktileId;
+    public StackTileInfo getStackTileInfo() {
+        return stackTileInfo;
     }
 
     public int getOldZ() {
@@ -90,5 +93,9 @@ public class FloorFurniMovement {
 
     public void setFurniId(int furniId) {
         this.furniId = furniId;
+    }
+
+    public StackTileInfo getUndoStackInfo() {
+        return undoStackInfo;
     }
 }

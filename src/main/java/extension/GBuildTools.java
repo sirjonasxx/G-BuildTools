@@ -12,11 +12,16 @@ import javafx.event.ActionEvent;
 import javafx.scene.control.*;
 import javafx.scene.paint.Paint;
 import room.FloorState;
+import room.StackTileInfo;
+import room.StackTileSetting;
+import room.StackTileUtils;
 import stuff.*;
 import utils.Utils;
 import utils.Wrapper;
 
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @ExtensionInfo(
         Title =  "G-BuildTools",
@@ -196,17 +201,31 @@ public class GBuildTools extends ExtensionForm {
     public boolean furniDataReady() {
         return furniDataTools != null && furniDataTools.isReady();
     }
-    private HFloorItem stackTileLarge() {
-        if (!floorState.inRoom() || !furniDataReady()) return null;
-        List<HFloorItem> items = floorState.getItemsFromType(furniDataTools, "tile_stackmagic2");
-        if (items.size() == 0) return null;
-        return items.get(0);
+    private List<StackTileInfo> allStackTiles() {
+        if (!floorState.inRoom() || !furniDataReady()) return new ArrayList<>();
+        List<StackTileInfo> allAvailableStackTiles = new ArrayList<>();
+        Set<String> allStacktileClasses = Arrays.stream(StackTileSetting.values()).map(StackTileSetting::getClassName).collect(Collectors.toSet());
+        allStacktileClasses.forEach(c -> {
+            List<HFloorItem> stackTiles = floorState.getItemsFromType(furniDataTools, c);
+            if (stackTiles.size() > 0) {
+                HFloorItem stackTile = stackTiles.get(0);
+                allAvailableStackTiles.add(new StackTileInfo(
+                        stackTile.getId(),
+                        stackTile.getTile(),
+                        stackTile.getFacing().ordinal(),
+                        StackTileSetting.fromClassName(c).getDimension(),
+                        stackTile.getTypeId()
+                ));
+            }
+        });
+
+        return allAvailableStackTiles;
     }
 
 
     public void updateUI() {
         Platform.runLater(() -> {
-            boolean stackLAvailable = stackTileLarge() != null;
+            boolean stackLAvailable = allStackTiles().size() > 0;
 
             room_found_lbl.setText(floorState.inRoom() ? "Room found" : "No room found");
             room_found_lbl.setTextFill(floorState.inRoom() ? Paint.valueOf("Green") : Paint.valueOf("Red"));
@@ -718,18 +737,6 @@ public class GBuildTools extends ExtensionForm {
         }
     }
 
-    private HPoint stackTileBestMoveLocation(int x, int y) {
-        char tileHeight = floorState.floorHeight(x, y);
-
-        if (floorState.inRoom() && tileHeight != 'x') {
-            int[][] offsets = {{0, 0}, {-1, 0}, {0, -1}, {-1, -1}};
-            return Arrays.stream(offsets).filter(
-                    o1 -> Arrays.stream(offsets).map(o2 -> floorState.floorHeight(x + o1[0] - o2[0], y + o1[1] - o2[1])).distinct().count() == 1)
-                    .findFirst().map(l -> new HPoint(x + l[0], y + l[1])).orElse(new HPoint(-1, -1));
-        }
-
-        return new HPoint(-1, -1);
-    }
     // furnimover
     private void furniMoverSendInfo(String text) {
         if (fm_cbx_visualhelp.isSelected()) {
@@ -792,14 +799,15 @@ public class GBuildTools extends ExtensionForm {
                     rot = movement.getNewRot();
                 }
 
-//                HFloorItem stackTile = stackTileLarge();
-                if (movement.useStacktileId() != -1) {
-                    HPoint stackLoc = stackTileBestMoveLocation(x, y);
+                StackTileInfo stackTileInfo = moveFurniState == MoveFurniState.UNDOING ? movement.getUndoStackInfo() : movement.getStackTileInfo();
 
-                    int stacktileId = movement.useStacktileId();
+                if (stackTileInfo != null) {
+                    HPoint stackLoc = stackTileInfo.getLocation();
+                    int stackRot = stackTileInfo.getRotation();
+                    int stacktileId = stackTileInfo.getFurniId();
 
                     if (latestStackMove == null || latestStackMove.getX() != stackLoc.getX() || latestStackMove.getY() != stackLoc.getY()) {
-                        moveFurni(stacktileId, MOVEFURNI_RATELIMIT/2, stackLoc.getX(), stackLoc.getY(), 0, -1);
+                        moveFurni(stacktileId, MOVEFURNI_RATELIMIT/2, stackLoc.getX(), stackLoc.getY(), stackRot, -1);
                         latestStackMove = null;
                     }
 
@@ -922,9 +930,8 @@ public class GBuildTools extends ExtensionForm {
         int xOffset = target.getX() - sourcePosition.getX();
         int yOffset = target.getY() - sourcePosition.getY();
 
-        HFloorItem stackTile = stackTileLarge();
-        int stackTileId = stackTile == null ? -1 : stackTile.getId();
-        boolean isStackTileUsed = false;
+        Set<Integer> usedStackTiles = new HashSet<>();
+        List<StackTileInfo> potentialStackTiles = allStackTiles();
 
         Optional<Integer> optMinZ = selection.stream().map(hFloorItem -> (int)(hFloorItem.getTile().getZ() * 100)).min(Integer::compareTo);
         int lowestZ = optMinZ.orElse(0);
@@ -961,14 +968,6 @@ public class GBuildTools extends ExtensionForm {
                 }
             }
 
-
-            boolean useStackTile = fm_cbx_usestacktile.isSelected()
-                    && stackTileLarge() != null &&
-                    furniDataTools.isStackable(classname);
-            if (useStackTile) {
-                isStackTileUsed = true;
-            }
-
             int newX = x+xOffset;
             int newY = y+yOffset;
             if (fm_cbx_inversedir.isSelected()) {
@@ -979,15 +978,30 @@ public class GBuildTools extends ExtensionForm {
                 newY += (xdiff-ydiff);
             }
 
+            StackTileInfo usedStackTile = null;
+            StackTileInfo undoStackInfo = null;
+            if (fm_cbx_usestacktile.isSelected()
+                    && furniDataTools.isStackable(classname)) {
+                usedStackTile = StackTileUtils.findBestDropLocation(newX, newY, potentialStackTiles, floorState);
+                if (usedStackTile != null) {
+                    usedStackTiles.add(usedStackTile.getFurniId());
+                }
+
+                undoStackInfo = StackTileUtils.findBestDropLocation(x, y, potentialStackTiles, floorState);
+                if (undoStackInfo != null) {
+                    usedStackTiles.add(undoStackInfo.getFurniId());
+                }
+            }
+
             FloorFurniMovement movement = new FloorFurniMovement(floorItem.getTypeId(), floorItem.getId(),
-                    x, y, rot, newX, newY, rot, oldZ, newZ, useStackTile ? stackTileId : -1
+                    x, y, rot, newX, newY, rot, oldZ, newZ, usedStackTile, undoStackInfo
             );
             floorFurniMovements.add(movement);
         }
 
         // decide order
         floorFurniMovements.sort((o1, o2) -> {
-            int maybe1 = Boolean.compare(o1.useStacktileId() != -1, o2.useStacktileId() != -1);
+            int maybe1 = Boolean.compare(o1.getStackTileInfo() != null, o2.getStackTileInfo() != null);
             if (maybe1 == 0) {
                 int maybe2 = Integer.compare(o1.getOldY(), o2.getOldY());
                 if (maybe2 == 0) {
@@ -1055,14 +1069,16 @@ public class GBuildTools extends ExtensionForm {
             for (FloorFurniMovement mov : newFurniId.keySet()) mov.setFurniId(newFurniId.get(mov));
         }
 
-        if (isStackTileUsed && stackTile != null) {
-            int x = stackTile.getTile().getX();
-            int y = stackTile.getTile().getY();
-            int rot = stackTile.getFacing().ordinal();
+        for(int stackTileId : usedStackTiles) {
+            StackTileInfo stackTile = potentialStackTiles.stream().filter(stackTileInfo1 -> stackTileInfo1.getFurniId() == stackTileId).findFirst().get();
+            int x = stackTile.getLocation().getX();
+            int y = stackTile.getLocation().getY();
+            int rot = stackTile.getRotation();
+            int typeId = stackTile.getTypeId();
 
             // set stacktile back to original position
-            floorFurniMovements.add(new FloorFurniMovement(stackTile.getTypeId(), stackTileId,
-                    x, y, rot, x, y, rot, 0, 0, -1));
+            floorFurniMovements.add(new FloorFurniMovement(typeId, stackTileId,
+                    x, y, rot, x, y, rot, 0, 0, null, null));
         }
 
         LinkedList<FloorFurniMovement> queue = new LinkedList<>(floorFurniMovements);

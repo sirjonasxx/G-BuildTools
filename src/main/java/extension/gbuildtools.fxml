@@ -1,9 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.SpinnerValueFactory.DoubleSpinnerValueFactory?>
+<?import javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="extension.GBuildTools">
+<AnchorPane style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="extension.GBuildTools">
    <children>
       <AnchorPane layoutY="216.0" prefHeight="37.0" prefWidth="543.0" style="-fx-background-color: #eee;">
          <children>
@@ -68,20 +80,20 @@
                      <children>
                         <AnchorPane layoutX="14.0" layoutY="13.0" prefHeight="129.0" prefWidth="166.0" style="-fx-background-color: #f2f2f2; -fx-background-radius: 5px; -fx-border-color: #ccc; -fx-border-radius: 5px;">
                            <children>
-                              <RadioButton fx:id="rd_fm_mode_tile" layoutX="9.0" layoutY="32.0" mnemonicParsing="false" onAction="#onChangeMovementMode" selected="true" text="Tile" textFill="#000000d6">
+                              <RadioButton fx:id="rd_fm_mode_tile" layoutX="9.0" layoutY="32.0" mnemonicParsing="false" onAction="#onChangeMovementMode" text="Tile" textFill="#000000d6">
                                  <toggleGroup>
                                     <ToggleGroup fx:id="mv_mode_tgl" />
                                  </toggleGroup>
                               </RadioButton>
                               <Label layoutX="9.0" layoutY="8.0" text="Movement mode:" />
-                              <RadioButton fx:id="rd_fm_mode_rect" layoutX="9.0" layoutY="74.0" mnemonicParsing="false" onAction="#onChangeMovementMode" text="Rectangle" textFill="#000000d6" toggleGroup="$mv_mode_tgl" />
+                              <RadioButton fx:id="rd_fm_mode_rect" layoutX="9.0" layoutY="74.0" mnemonicParsing="false" onAction="#onChangeMovementMode" selected="true" text="Rectangle" textFill="#000000d6" toggleGroup="$mv_mode_tgl" />
                               <CheckBox fx:id="fm_cbx_inversedir" disable="true" layoutX="9.0" layoutY="101.0" mnemonicParsing="false" text="Inverse direction" textFill="#000000d6" />
                               <RadioButton fx:id="rd_fm_mode_auto" layoutX="9.0" layoutY="53.0" mnemonicParsing="false" onAction="#onChangeMovementMode" text="Auto" textFill="#000000d6" toggleGroup="$mv_mode_tgl" />
                            </children>
                         </AnchorPane>
                         <AnchorPane layoutX="196.0" layoutY="13.0" prefHeight="129.0" prefWidth="218.0" style="-fx-background-color: #f2f2f2; -fx-background-radius: 5px; -fx-border-color: #ccc; -fx-border-radius: 5px;">
                            <children>
-                              <CheckBox fx:id="fm_cbx_usestacktile" disable="true" layoutX="8.0" layoutY="6.0" mnemonicParsing="false" onAction="#updateUI" selected="true" text="Use stacktile (2x2)" textFill="#000000d6" />
+                              <CheckBox fx:id="fm_cbx_usestacktile" disable="true" layoutX="8.0" layoutY="6.0" mnemonicParsing="false" onAction="#updateUI" selected="true" text="Use stacktile" textFill="#000000d6" />
                               <Spinner fx:id="height_offset_spinner" disable="true" editable="true" layoutX="102.0" layoutY="31.0" prefHeight="25.0" prefWidth="83.0">
                                  <valueFactory>
                                     <SpinnerValueFactory.DoubleSpinnerValueFactory amountToStepBy="0.1" initialValue="0.0" max="60.0" min="-50.0" />
@@ -105,8 +117,8 @@
                               </Spinner>
                            </children>
                         </AnchorPane>
-                        <CheckBox fx:id="fm_cbx_rotatefurni" layoutX="14.0" layoutY="148.0" mnemonicParsing="false" onAction="#onRotatedFurniClick" text="Rotate furniture" textFill="#000000d6" />
-                        <CheckBox fx:id="fm_cbx_wiredsafety" layoutX="132.0" layoutY="148.0" mnemonicParsing="false" selected="true" text="Wired safety" />
+                        <CheckBox fx:id="fm_cbx_rotatefurni" disable="true" layoutX="14.0" layoutY="148.0" mnemonicParsing="false" onAction="#onRotatedFurniClick" text="Rotate furniture" textFill="#000000d6" />
+                        <CheckBox fx:id="fm_cbx_wiredsafety" layoutX="132.0" layoutY="148.0" mnemonicParsing="false" text="Wired safety" />
                         <CheckBox fx:id="fm_cbx_visualhelp" layoutX="236.0" layoutY="148.0" mnemonicParsing="false" selected="true" text="Visual help" />
                         <AnchorPane layoutX="434.0" layoutY="13.0" prefHeight="158.0" prefWidth="94.0" style="-fx-border-width: 1px; -fx-border-color: #ccc;">
                            <children>
