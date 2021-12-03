@@ -1,6 +1,8 @@
 # G-BuildTools
 
-**NOTE: Report bugs [here](https://github.com/sirjonasxx/G-BuildTools/issues) and check this page regularly for updates**
+**NOTE: Get the latest version from the G-ExtensionStore in G-Earth 1.5+, and not from the /releases in github**
+
+**NOTE 2: Report bugs [here](https://github.com/sirjonasxx/G-BuildTools/issues) and check this page regularly for updates**
 
 G-BuildTools is an advanced G-Earth extension that attempts to compensate all Habbo's shortcomings when it comes to building experience. It currently contains 6 features
 
