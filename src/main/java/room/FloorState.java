@@ -348,9 +348,9 @@ public class FloorState {
         }
     }
 
-    public boolean hasMappings() {
+    public int amountMappings() {
         synchronized (lock) {
-            return typeIdMapper.size() > 0;
+            return typeIdMapper.size();
         }
     }
 

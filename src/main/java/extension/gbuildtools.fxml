@@ -1,21 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.CheckBox?>
-<?import javafx.scene.control.Hyperlink?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.RadioButton?>
-<?import javafx.scene.control.Slider?>
-<?import javafx.scene.control.Spinner?>
-<?import javafx.scene.control.SpinnerValueFactory.DoubleSpinnerValueFactory?>
-<?import javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory?>
-<?import javafx.scene.control.Tab?>
-<?import javafx.scene.control.TabPane?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.ToggleGroup?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<AnchorPane style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="extension.GBuildTools">
+<AnchorPane style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="extension.GBuildTools">
    <children>
       <AnchorPane layoutY="216.0" prefHeight="37.0" prefWidth="543.0" style="-fx-background-color: #eee;">
          <children>
@@ -74,6 +62,20 @@
                      </children></AnchorPane>
             </content>
           </Tab>
+           <Tab text="General 2">
+              <content>
+                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="293.0" prefWidth="577.0">
+                     <children>
+                        <AnchorPane layoutX="14.0" layoutY="14.0" prefHeight="70.0" prefWidth="204.0" style="-fx-border-color: grey; -fx-border-radius: 3px;">
+                           <children>
+                              <Label layoutX="52.0" layoutY="-8.0" style="-fx-background-color: white;" text="Black hole stacking" />
+                              <CheckBox fx:id="replace_bh_cbx" disable="true" layoutX="12.0" layoutY="9.0" mnemonicParsing="false" onAction="#replaceBlackHolesClick" prefHeight="56.0" prefWidth="179.0" text="Replace black holes with USVA" textFill="#000000d6" wrapText="true" />
+                           </children>
+                        </AnchorPane>
+                     </children>
+                 </AnchorPane>
+              </content>
+           </Tab>
            <Tab text="Furni mover">
               <content>
                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
@@ -213,6 +215,7 @@
                            </children>
                         </AnchorPane>
                         <Button layoutX="406.0" layoutY="12.0" mnemonicParsing="false" onAction="#reload_inv" text="Reload Inventory" />
+                        <CheckBox fx:id="block_walking_cbx" layoutX="14.0" layoutY="112.0" mnemonicParsing="false" text="Block walking" />
                      </children></AnchorPane>
               </content>
            </Tab>

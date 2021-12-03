@@ -20,7 +20,6 @@ import utils.Utils;
 import utils.Wrapper;
 
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @ExtensionInfo(
@@ -37,6 +36,8 @@ public class GBuildTools extends ExtensionForm {
     public Slider ratelimiter;
     public Spinner<Integer> packet_spam_spinner;
     public CheckBox cbx_spam;
+
+    public CheckBox block_walking_cbx;
 
 
     // G-BuildTools general elements
@@ -63,6 +64,9 @@ public class GBuildTools extends ExtensionForm {
 
     // invisible furni tools
     public CheckBox ift_pizza_cbx;
+
+    // black hole stacking tools
+    public CheckBox replace_bh_cbx;
 
     // furni mover
     public CheckBox fm_visualhelp_lbl;
@@ -134,8 +138,10 @@ public class GBuildTools extends ExtensionForm {
     private final LinkedList<HFloorItem> delayedStacktileUpdates = new LinkedList<>();
     private volatile int stacktileheight = -1;
 
-    // invis furni
-    private volatile long latestTboneReq = -1;
+    // invis furni & black hole
+    private volatile long latestReq = -1;
+
+
 
 
 
@@ -253,8 +259,9 @@ public class GBuildTools extends ExtensionForm {
             st_allstacktile_cbx.setDisable(!furniDataReady());
 
 
-            // invisible furni tools
-            ift_pizza_cbx.setDisable(!furniDataReady() || latestTboneReq > System.currentTimeMillis() - RATELIMIT);
+            // invisible furni tools & black hole stacking
+            ift_pizza_cbx.setDisable(!furniDataReady() || latestReq > System.currentTimeMillis() - RATELIMIT);
+            replace_bh_cbx.setDisable(!furniDataReady() || latestReq > System.currentTimeMillis() - RATELIMIT);
 
 
             // furni mover
@@ -377,8 +384,9 @@ public class GBuildTools extends ExtensionForm {
 
         onConnect((host, i, s1, s2, hClient) -> {
             furniDataTools = new FurniDataTools(host, observable -> {
-                updateUI();
+                maybeReplaceBlackHoles();
                 maybeReplaceTBones();
+                updateUI();
             });
         });
     }
@@ -1165,6 +1173,10 @@ public class GBuildTools extends ExtensionForm {
                 }
             }
         }
+
+        if (block_walking_cbx.isSelected()) {
+            hMessage.setBlocked(true);
+        }
     }
     public void onChangeMovementMode(ActionEvent actionEvent) {
         synchronized (furniMoveLock) {
@@ -1240,33 +1252,55 @@ public class GBuildTools extends ExtensionForm {
 
 
     private void maybeReplaceTBones() {
-        boolean wasEnabled = floorState.hasMappings();
         boolean enabled = buildToolsEnabled() && furniDataReady() && ift_pizza_cbx.isSelected();
 
-        if (wasEnabled != enabled) {
-            List<String> invisibleFurni1State = Arrays.asList("petfood4", "s_snowball_machine", "wf_blob", "wf_blob2",
-                    "wf_blob_invis", "wf_blob2_vis");
+        List<String> invisibleFurni1State = Arrays.asList("petfood4", "s_snowball_machine", "wf_blob", "wf_blob2",
+                "wf_blob_invis", "wf_blob2_vis");
 
-            List<String> invisibleFurni2States = Arrays.asList("room_invisible_block", "tile_fxprovider_nfs", "room_wl15_infolink");
+        List<String> invisibleFurni2States = Arrays.asList("room_invisible_block", "tile_fxprovider_nfs", "room_wl15_infolink");
 
-            if (enabled) {
-                invisibleFurni1State.forEach(f -> floorState.addTypeIdMapper(furniDataTools, f, "pizza"));
-                invisibleFurni2States.forEach(f -> floorState.addTypeIdMapper(furniDataTools, f, "antique_c21_magnifyinglass"));
-            }
-            else {
-                invisibleFurni1State.forEach(f -> floorState.removeTypeIdMapper(furniDataTools, f));
-                invisibleFurni2States.forEach(f -> floorState.removeTypeIdMapper(furniDataTools, f));
-            }
+        int oldSize = floorState.amountMappings();
 
+        if (enabled) {
+            invisibleFurni1State.forEach(f -> floorState.addTypeIdMapper(furniDataTools, f, "pizza"));
+            invisibleFurni2States.forEach(f -> floorState.addTypeIdMapper(furniDataTools, f, "antique_c21_magnifyinglass"));
+        }
+        else {
+            invisibleFurni1State.forEach(f -> floorState.removeTypeIdMapper(furniDataTools, f));
+            invisibleFurni2States.forEach(f -> floorState.removeTypeIdMapper(furniDataTools, f));
+        }
 
-            if (floorState.inRoom()) {
-                floorState.heavyReload(this);
-                latestTboneReq = System.currentTimeMillis();
-                new Thread(() -> {
-                    Utils.sleep(RATELIMIT + 50);
-                    updateUI();
-                }).start();
-            }
+        // changes have been made
+        if (floorState.amountMappings() != oldSize) {
+            reloadRoom();
+        }
+    }
+
+    private void reloadRoom() {
+        if (floorState.inRoom()) {
+            floorState.heavyReload(this);
+            latestReq = System.currentTimeMillis();
+            new Thread(() -> {
+                Utils.sleep(RATELIMIT + 50);
+                updateUI();
+            }).start();
+        }
+    }
+
+    private void maybeReplaceBlackHoles() {
+        boolean enabled = buildToolsEnabled() && furniDataReady() && replace_bh_cbx.isSelected();
+
+        int oldSize = floorState.amountMappings();
+        if (enabled) {
+            floorState.addTypeIdMapper(furniDataTools, "hole", "usva2_rug");
+        }
+        else {
+            floorState.removeTypeIdMapper(furniDataTools, "hole");
+        }
+
+        // changes have been made
+        if (floorState.amountMappings() != oldSize) {
+            reloadRoom();
         }
     }
 
@@ -1285,11 +1319,16 @@ public class GBuildTools extends ExtensionForm {
 
     public void enable_tgl(ActionEvent actionEvent) {
         maybeReplaceTBones();
+        maybeReplaceBlackHoles();
         updateUI();
     }
 
     public void tbones_tgl(ActionEvent actionEvent) {
         maybeReplaceTBones();
+    }
+
+    public void replaceBlackHolesClick(ActionEvent actionEvent) {
+        maybeReplaceBlackHoles();
     }
 
 
