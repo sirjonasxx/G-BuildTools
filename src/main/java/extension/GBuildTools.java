@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @ExtensionInfo(
         Title =  "G-BuildTools",
         Description =  "For all your building needs",
-        Version =  "1.2.1",
+        Version =  "2.0",
         Author =  "sirjonasxx"
 )
 public class GBuildTools extends ExtensionForm {
@@ -107,7 +107,12 @@ public class GBuildTools extends ExtensionForm {
     public Button pm_offset_down_btn;
     public Button pm_offset_left_btn;
 
+    // hide furni
+    public CheckBox pickup_hide_cbx;
+    public Button makevisibleBtn;
+
     private static final int ratelimitStartOffset = 15;
+
 
     private volatile int RATELIMIT = 526;
     private volatile int STACKTILE_RATELIMIT = 16;
@@ -308,6 +313,11 @@ public class GBuildTools extends ExtensionForm {
                 pm_rd_right.setSelected(!latestWallFurniMovement.isLeft());
             }
 
+
+            // hide furni
+            pickup_hide_cbx.setDisable(!buildToolsEnabled()); // make sure you're not gonna pick up furni if gbuildtools not enabled
+            makevisibleBtn.setDisable(!floorState.hasHiddenFurni());
+
         });
     }
 
@@ -379,6 +389,9 @@ public class GBuildTools extends ExtensionForm {
         intercept(HMessage.Direction.TOSERVER, "MoveWallItem", this::onMoveWallItem);
         intercept(HMessage.Direction.TOCLIENT, "ItemUpdate", this::posterMoved);
 
+        // hide furni
+        intercept(HMessage.Direction.TOSERVER, "PickupObject", this::onPickUpItem);
+
         floorState.requestRoom(this);
 
 
@@ -389,6 +402,20 @@ public class GBuildTools extends ExtensionForm {
                 updateUI();
             });
         });
+    }
+
+    private void onPickUpItem(HMessage hMessage) {
+        if (buildToolsEnabled() && pickup_hide_cbx.isSelected()) {
+            HPacket packet = hMessage.getPacket();
+            int mode = packet.readInteger();
+            int furniId = packet.readInteger();
+            if (mode == 2) {
+                floorState.hideFurni(furniId);
+                hMessage.setBlocked(true);
+                sendToClient(new HPacket("ObjectRemove", HMessage.Direction.TOCLIENT, "" + furniId, false, 0, 0));
+                updateUI();
+            }
+        }
     }
 
     @Override
@@ -1174,7 +1201,7 @@ public class GBuildTools extends ExtensionForm {
             }
         }
 
-        if (block_walking_cbx.isSelected()) {
+        if (block_walking_cbx.isSelected() && buildToolsEnabled()) {
             hMessage.setBlocked(true);
         }
     }
@@ -1251,6 +1278,17 @@ public class GBuildTools extends ExtensionForm {
     }
 
 
+    private void reloadRoom() {
+        if (floorState.inRoom()) {
+            floorState.heavyReload(this);
+            latestReq = System.currentTimeMillis();
+            new Thread(() -> {
+                Utils.sleep(RATELIMIT + 50);
+                updateUI();
+            }).start();
+        }
+    }
+
     private void maybeReplaceTBones() {
         boolean enabled = buildToolsEnabled() && furniDataReady() && ift_pizza_cbx.isSelected();
 
@@ -1275,18 +1313,6 @@ public class GBuildTools extends ExtensionForm {
             reloadRoom();
         }
     }
-
-    private void reloadRoom() {
-        if (floorState.inRoom()) {
-            floorState.heavyReload(this);
-            latestReq = System.currentTimeMillis();
-            new Thread(() -> {
-                Utils.sleep(RATELIMIT + 50);
-                updateUI();
-            }).start();
-        }
-    }
-
     private void maybeReplaceBlackHoles() {
         boolean enabled = buildToolsEnabled() && furniDataReady() && replace_bh_cbx.isSelected();
 
@@ -1303,6 +1329,7 @@ public class GBuildTools extends ExtensionForm {
             reloadRoom();
         }
     }
+
 
     public void toggleAlwaysOnTop(ActionEvent actionEvent) {
         primaryStage.setAlwaysOnTop(always_on_top_cbx.isSelected());
@@ -1329,6 +1356,12 @@ public class GBuildTools extends ExtensionForm {
 
     public void replaceBlackHolesClick(ActionEvent actionEvent) {
         maybeReplaceBlackHoles();
+    }
+
+    public void makeVisibleClick(ActionEvent actionEvent) {
+        floorState.clearHiddenFurni();
+        updateUI();
+        reloadRoom();
     }
 
 

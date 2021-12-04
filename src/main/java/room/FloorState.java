@@ -10,6 +10,7 @@ import gearth.protocol.HPacket;
 import javafx.beans.InvalidationListener;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class FloorState {
 
@@ -26,6 +27,7 @@ public class FloorState {
     private volatile List<List<Map<Integer, HFloorItem>>> furnimap = null;
     private volatile char[][] floorplan = null;
 
+    private volatile Set<Integer> hiddenFurni = new HashSet<>();
 
     public FloorState(IExtension extension, InvalidationListener onFurnisChange) {
         this.onFurnisChange = onFurnisChange;
@@ -156,6 +158,12 @@ public class FloorState {
                 typeIdToItems.get(item.getTypeId()).add(item);
             }
 
+            if (hiddenFurni.size() > 0) {
+                mustReplace = true;
+                floorItems = Arrays.stream(floorItems)
+                        .filter(floorItem -> !hiddenFurni.contains(floorItem.getId())).toArray(HFloorItem[]::new);
+            }
+
             if (mustReplace) {
                 HPacket packet = HFloorItem.constructPacket(floorItems, hMessage.getPacket().headerId());
                 hMessage.getPacket().setBytes(packet.toBytes());
@@ -168,9 +176,13 @@ public class FloorState {
     private void onObjectRemove(HMessage hMessage) {
         if (inRoom()) {
             HPacket packet = hMessage.getPacket();
-            int furniid = Integer.parseInt(packet.readString());
-            removeObject(furniid);
+            int furniId = Integer.parseInt(packet.readString());
+            removeObject(furniId);
             onFurnisChange.invalidated(null);
+
+            synchronized (lock) {
+                hiddenFurni.remove(furniId);
+            }
         }
     }
     private void removeObject(int furniId) {
@@ -185,12 +197,16 @@ public class FloorState {
     }
     private void onObjectAdd(HMessage hMessage) {
         if (inRoom()) {
-            addObject(hMessage.getPacket(), null);
+            HFloorItem added = addObject(hMessage.getPacket(), null);
             onFurnisChange.invalidated(null);
+
+            synchronized (lock) {
+                hiddenFurni.remove(added.getId());
+            }
         }
 
     }
-    private void addObject(HPacket packet, String ownerName) {
+    private HFloorItem addObject(HPacket packet, String ownerName) {
         synchronized (lock) {
             HFloorItem item = new HFloorItem(packet);
             if (ownerName == null) {
@@ -210,6 +226,8 @@ public class FloorState {
                 typeIdToItems.put(item.getTypeId(), new HashSet<>());
             }
             typeIdToItems.get(item.getTypeId()).add(item);
+
+            return item;
         }
     }
     private void onObjectUpdate(HMessage hMessage) {
@@ -225,6 +243,12 @@ public class FloorState {
             removeObject(newItem.getId());
             hMessage.getPacket().resetReadIndex();
             addObject(hMessage.getPacket(), owner);
+
+            synchronized (lock) {
+                if (hiddenFurni.contains(newItem.getId())) {
+                    hMessage.setBlocked(true);
+                }
+            }
         }
     }
     private void onObjectMove(HMessage hMessage) {
@@ -361,5 +385,23 @@ public class FloorState {
                     x < floorplan.length && y < floorplan[x].length) ? floorplan[x][y] : 'x';
         }
         return result;
+    }
+
+    public void hideFurni(int furniId) {
+        synchronized (lock) {
+            hiddenFurni.add(furniId);
+        }
+    }
+
+    public void clearHiddenFurni() {
+        synchronized (lock) {
+            hiddenFurni.clear();
+        }
+    }
+
+    public boolean hasHiddenFurni() {
+        synchronized (lock) {
+            return hiddenFurni.size() > 0;
+        }
     }
 }

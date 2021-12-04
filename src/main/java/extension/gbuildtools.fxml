@@ -62,20 +62,6 @@
                      </children></AnchorPane>
             </content>
           </Tab>
-           <Tab text="General 2">
-              <content>
-                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="293.0" prefWidth="577.0">
-                     <children>
-                        <AnchorPane layoutX="14.0" layoutY="14.0" prefHeight="70.0" prefWidth="204.0" style="-fx-border-color: grey; -fx-border-radius: 3px;">
-                           <children>
-                              <Label layoutX="52.0" layoutY="-8.0" style="-fx-background-color: white;" text="Black hole stacking" />
-                              <CheckBox fx:id="replace_bh_cbx" disable="true" layoutX="12.0" layoutY="9.0" mnemonicParsing="false" onAction="#replaceBlackHolesClick" prefHeight="56.0" prefWidth="179.0" text="Replace black holes with USVA" textFill="#000000d6" wrapText="true" />
-                           </children>
-                        </AnchorPane>
-                     </children>
-                 </AnchorPane>
-              </content>
-           </Tab>
            <Tab text="Furni mover">
               <content>
                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
@@ -196,13 +182,34 @@
                      </children></AnchorPane>
               </content>
            </Tab>
+           <Tab text="Extra">
+              <content>
+                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="293.0" prefWidth="577.0">
+                     <children>
+                        <AnchorPane layoutX="14.0" layoutY="106.0" prefHeight="62.0" prefWidth="204.0" style="-fx-border-color: grey; -fx-border-radius: 3px;">
+                           <children>
+                              <Label layoutX="52.0" layoutY="-8.0" style="-fx-background-color: white;" text="Black hole stacking" />
+                              <CheckBox fx:id="replace_bh_cbx" disable="true" layoutX="12.0" layoutY="10.0" mnemonicParsing="false" onAction="#replaceBlackHolesClick" prefHeight="48.0" prefWidth="179.0" text="Replace black holes with USVA" textFill="#000000d6" wrapText="true" />
+                           </children>
+                        </AnchorPane>
+                        <AnchorPane layoutX="14.0" layoutY="14.0" prefHeight="77.0" prefWidth="204.0" style="-fx-border-color: grey; -fx-border-radius: 3px;">
+                           <children>
+                              <Label layoutX="75.0" layoutY="-8.0" style="-fx-background-color: white;" text="Hide Furni" />
+                              <CheckBox fx:id="pickup_hide_cbx" disable="true" layoutX="12.0" layoutY="9.0" mnemonicParsing="false" onAction="#replaceBlackHolesClick" prefHeight="27.0" prefWidth="179.0" text="Hide furni by picking up" textFill="#000000d6" wrapText="true" />
+                              <Button fx:id="makevisibleBtn" disable="true" layoutX="12.0" layoutY="37.0" mnemonicParsing="false" onAction="#makeVisibleClick" text="Make furni visible again" />
+                           </children>
+                        </AnchorPane>
+                     </children>
+                 </AnchorPane>
+              </content>
+           </Tab>
            <Tab text="Settings">
               <content>
                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
                         <Hyperlink fx:id="readmeLink" layoutX="9.0" layoutY="147.0" text="Read the github README usage instructions" />
                         <CheckBox fx:id="always_on_top_cbx" layoutX="423.0" layoutY="143.0" mnemonicParsing="false" onAction="#toggleAlwaysOnTop" prefHeight="31.0" prefWidth="109.0" text="Always on top" />
-                        <AnchorPane layoutX="12.0" layoutY="12.0" prefHeight="92.0" prefWidth="241.0" style="-fx-border-color: #ccc; -fx-border-width: 1px;">
+                        <AnchorPane layoutX="11.0" layoutY="13.0" prefHeight="92.0" prefWidth="241.0" style="-fx-border-color: #ccc; -fx-border-width: 1px;">
                            <children>
                               <Label layoutX="11.0" layoutY="6.0" text="Ratelimit:" />
                               <Slider fx:id="ratelimiter" layoutX="13.0" layoutY="29.0" prefHeight="14.0" prefWidth="219.0" />
@@ -215,7 +222,7 @@
                            </children>
                         </AnchorPane>
                         <Button layoutX="406.0" layoutY="12.0" mnemonicParsing="false" onAction="#reload_inv" text="Reload Inventory" />
-                        <CheckBox fx:id="block_walking_cbx" layoutX="14.0" layoutY="112.0" mnemonicParsing="false" text="Block walking" />
+                        <CheckBox fx:id="block_walking_cbx" layoutX="423.0" layoutY="122.0" mnemonicParsing="false" text="Block walking" />
                      </children></AnchorPane>
               </content>
            </Tab>

@@ -16,7 +16,7 @@ public class GBuildToolsLauncher extends ExtensionFormCreator {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("gbuildtools.fxml"));
         Parent root = loader.load();
 
-        stage.setTitle("G-BuildTools 1.2");
+        stage.setTitle("G-BuildTools 2.0");
         stage.setScene(new Scene(root));
         stage.getScene().getStylesheets().add(GEarthController.class.getResource("/gearth/themes/G-Earth/styling.css").toExternalForm());
         stage.getIcons().add(new Image(Main.class.getResourceAsStream("/gearth/themes/G-Earth/logoSmall.png")));
