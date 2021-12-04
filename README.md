@@ -1,6 +1,6 @@
 # G-BuildTools
 
-**NOTE: Get the latest version from the G-ExtensionStore in G-Earth 1.5+, and not from the /releases in github**
+**NOTE: Get the latest version from the G-ExtensionStore in G-Earth 1.5.1+, and not from the /releases in github**
 
 **NOTE 2: Report bugs [here](https://github.com/sirjonasxx/G-BuildTools/issues) and check this page regularly for updates**
 
@@ -16,9 +16,11 @@ Youtube demo's:
 4. [Wired Duplicator - Demo](https://www.youtube.com/watch?v=SgQZwKdnBkY)
 5. [Stacktile Tools - Demo](https://www.youtube.com/watch?v=-5gHMBWeBQo)
 6. [Invisible Furni Tools - Demo](https://www.youtube.com/watch?v=A8TEgt4mKXc)
+7. Hide furni - coming soon
+8. Black hole stacking - coming soon
 
 ## Furni mover
-![image](https://user-images.githubusercontent.com/36828922/125194835-4b64eb00-e253-11eb-8a41-01790e85666a.png)
+![image](https://user-images.githubusercontent.com/36828922/144688474-c8d3aaff-aedd-483a-8f2d-2cf3c8df97ae.png)
 
 **3 modes are available:**
 * Tile _-> Move all the furniture on a single tile when you type ```:move```_
@@ -26,7 +28,7 @@ Youtube demo's:
 * Rectangle _-> Move all furniture in a region_
    * You may select _Inverse direction_, to mirror the selection
 
-By default, "Use stacktile (2x2)" is enabled to copy the exact heights of every furniture. You may also unselect it
+By default, "Use stacktile" is enabled to copy the exact heights of every furniture. You may also unselect it
 There are **3 options:**
 * Match height
 * Offset _-> move the selection with an offset_
@@ -76,6 +78,11 @@ Self explanatory
 
 ### Invisible furni tools
 ![image](https://user-images.githubusercontent.com/36828922/125196925-f11c5800-e25b-11eb-9d61-aa43f1babd43.png)
+
+Self explanatory
+
+## Extra
+![image](https://user-images.githubusercontent.com/36828922/144688513-f74a38a0-9356-499d-b035-52cbce773406.png)
 
 Self explanatory
 
