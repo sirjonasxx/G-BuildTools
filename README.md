@@ -44,7 +44,7 @@ There are **3 options:**
 
 **Other options:**
 * The checkbox **Visual help** gives you information inside your client
-* **Wired safety** makes sure to move wired in an order so a stack is never left without it's conditions (warning: in the current implementation, this changes the order of the wired boxes)
+* **Wired safety** makes sure to move wired in an order so a stack is never left without it's conditions _(warning: in the current implementation, this changes the order of the wired boxes)_
 
 
 ## Poster mover
