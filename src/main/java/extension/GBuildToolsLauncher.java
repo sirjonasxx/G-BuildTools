@@ -1,29 +1,26 @@
 package extension;
 
-import gearth.Main;
-import gearth.extensions.ExtensionForm;
-import gearth.extensions.ExtensionFormCreator;
-import gearth.ui.GEarthController;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.image.Image;
+import gearth.extensions.ThemedExtensionFormCreator;
 import javafx.stage.Stage;
 
-public class GBuildToolsLauncher extends ExtensionFormCreator {
+import java.net.URL;
+
+
+public class GBuildToolsLauncher extends ThemedExtensionFormCreator {
+
     @Override
-    protected ExtensionForm createForm(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("gbuildtools.fxml"));
-        Parent root = loader.load();
+    protected String getTitle() {
+        return "G-BuildTools 2.0";
+    }
 
-        stage.setTitle("G-BuildTools 2.0");
-        stage.setScene(new Scene(root));
-        stage.getScene().getStylesheets().add(GEarthController.class.getResource("/gearth/themes/G-Earth/styling.css").toExternalForm());
-        stage.getIcons().add(new Image(Main.class.getResourceAsStream("/gearth/themes/G-Earth/logoSmall.png")));
+    @Override
+    protected URL getFormResource() {
+        return getClass().getResource("gbuildtools.fxml");
+    }
 
-        stage.setResizable(false);
-
-        return loader.getController();
+    @Override
+    protected void initialize(Stage primaryStage) {
+        primaryStage.getScene().getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
     }
 
     public static void main(String[] args) {
@@ -31,3 +28,4 @@ public class GBuildToolsLauncher extends ExtensionFormCreator {
     }
 
 }
+

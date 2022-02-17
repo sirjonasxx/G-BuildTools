@@ -238,12 +238,15 @@ public class GBuildTools extends ExtensionForm {
         Platform.runLater(() -> {
             boolean stackLAvailable = allStackTiles().size() > 0;
 
+            room_found_lbl.getStyleClass().clear();
+            furnidata_lbl.getStyleClass().clear();
+            stack_tile_lbl.getStyleClass().clear();
             room_found_lbl.setText(floorState.inRoom() ? "Room found" : "No room found");
-            room_found_lbl.setTextFill(floorState.inRoom() ? Paint.valueOf("Green") : Paint.valueOf("Red"));
+            room_found_lbl.getStyleClass().add(floorState.inRoom() ? "lblgreen" : "lblred");
             furnidata_lbl.setText(furniDataReady() ? "Furnidata loaded" : "Furnidata not loaded");
-            furnidata_lbl.setTextFill(furniDataReady() ? Paint.valueOf("Green") : Paint.valueOf("Red"));
+            furnidata_lbl.getStyleClass().add(furniDataReady() ? "lblgreen" : "lblred");
             stack_tile_lbl.setText(stackLAvailable ? "Stack tile found" : "No stack tile found");
-            stack_tile_lbl.setTextFill(stackLAvailable ? Paint.valueOf("Green") : Paint.valueOf("Red"));
+            stack_tile_lbl.getStyleClass().add(stackLAvailable ? "lblgreen" : "lblred");
 
             // quickdrop furni
             override_rotation_spinner.setDisable(!override_rotation_cbx.isSelected());
@@ -402,6 +405,8 @@ public class GBuildTools extends ExtensionForm {
                 updateUI();
             });
         });
+
+        updateUI();
     }
 
     private void onPickUpItem(HMessage hMessage) {

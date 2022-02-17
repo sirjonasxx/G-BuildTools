@@ -1,27 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="extension.GBuildTools">
+<AnchorPane xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="extension.GBuildTools">
    <children>
-      <AnchorPane layoutY="216.0" prefHeight="37.0" prefWidth="543.0" style="-fx-background-color: #eee;">
+      <AnchorPane layoutY="216.0" prefHeight="37.0" prefWidth="543.0" styleClass="themed-background2">
          <children>
             <CheckBox fx:id="enable_gbuildtools" layoutX="14.0" layoutY="8.0" mnemonicParsing="false" onAction="#enable_tgl" text="Enable G-BuildTools" />
-            <Label fx:id="room_found_lbl" layoutX="159.0" layoutY="11.0" text="No room found" textFill="RED" />
-            <Label fx:id="furnidata_lbl" layoutX="276.0" layoutY="11.0" text="Furnidata not loaded" textFill="RED" />
-            <Label fx:id="stack_tile_lbl" layoutX="416.0" layoutY="11.0" text="No stack tile found" textFill="RED" />
+            <Label fx:id="room_found_lbl" layoutX="169.0" layoutY="11.0" styleClass="lblred" text="No room found" />
+            <Label fx:id="furnidata_lbl" layoutX="280.0" layoutY="11.0" styleClass="lblred" text="Furnidata not loaded" />
+            <Label fx:id="stack_tile_lbl" layoutX="416.0" layoutY="11.0" styleClass="lblred" text="No stack tile found" />
          </children>
       </AnchorPane>
       <TabPane layoutX="-1.0" prefHeight="211.0" prefWidth="544.0" tabClosingPolicy="UNAVAILABLE">
         <tabs>
           <Tab text="General">
             <content>
-              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="293.0" prefWidth="577.0">
+              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="179.0" prefWidth="544.0">
                      <children>
                         <AnchorPane layoutX="14.0" layoutY="14.0" prefHeight="154.0" prefWidth="146.0" style="-fx-border-color: grey; -fx-border-radius: 3px;">
                            <children>
-                              <Label layoutX="31.0" layoutY="-8.0" style="-fx-background-color: white;" text="Quickdrop furni" />
+                              <Label layoutX="31.0" layoutY="-8.0" text="Quickdrop furni">
+                                 <styleClass>
+                                    <String fx:value="themed-background" />
+                                    <String fx:value="softer" />
+                                 </styleClass></Label>
                               <CheckBox fx:id="qd_floor_cbx" layoutX="14.0" layoutY="22.0" mnemonicParsing="false" selected="true" text="Floor furniture" textFill="#000000d7" />
                               <CheckBox fx:id="qd_wall_cbx" layoutX="14.0" layoutY="44.0" mnemonicParsing="false" selected="true" text="Wall furniture" textFill="#000000d6" />
                               <CheckBox fx:id="override_rotation_cbx" layoutX="14.0" layoutY="87.0" mnemonicParsing="false" onAction="#toggleOverrideRotation" text="Override rotation:" textFill="#000000d6" />
@@ -35,7 +40,11 @@
                         </AnchorPane>
                         <AnchorPane layoutX="170.0" layoutY="14.0" prefHeight="154.0" prefWidth="146.0" style="-fx-border-color: grey; -fx-border-radius: 3px;">
                            <children>
-                              <Label layoutX="29.0" layoutY="-8.0" style="-fx-background-color: white;" text="Wired duplicator" />
+                              <Label layoutX="29.0" layoutY="-8.0" text="Wired duplicator">
+                                 <styleClass>
+                                    <String fx:value="softer" />
+                                    <String fx:value="themed-background" />
+                                 </styleClass></Label>
                               <RadioButton fx:id="rd_wired_none" layoutX="14.0" layoutY="48.0" mnemonicParsing="false" selected="true" text="None" textFill="#000000d6">
                                  <toggleGroup>
                                     <ToggleGroup fx:id="wired_tgl" />
@@ -49,13 +58,21 @@
                         </AnchorPane>
                         <AnchorPane layoutX="323.0" layoutY="14.0" prefHeight="70.0" prefWidth="204.0" style="-fx-border-color: grey; -fx-border-radius: 3px;">
                            <children>
-                              <Label layoutX="65.0" layoutY="-8.0" style="-fx-background-color: white;" text="Stacktile tools" />
+                              <Label layoutX="65.0" layoutY="-8.0" text="Stacktile tools">
+                                 <styleClass>
+                                    <String fx:value="softer" />
+                                    <String fx:value="themed-background" />
+                                 </styleClass></Label>
                               <CheckBox fx:id="st_allstacktile_cbx" disable="true" layoutX="12.0" layoutY="9.0" mnemonicParsing="false" prefHeight="56.0" prefWidth="179.0" text="Apply stacktile updates to all stacktiles in room" textFill="#000000d6" wrapText="true" />
                            </children>
                         </AnchorPane>
                         <AnchorPane layoutX="323.0" layoutY="98.0" prefHeight="70.0" prefWidth="204.0" style="-fx-border-color: grey; -fx-border-radius: 3px;">
                            <children>
-                              <Label layoutX="52.0" layoutY="-8.0" style="-fx-background-color: white;" text="Invisible furni tools" />
+                              <Label layoutX="52.0" layoutY="-8.0" text="Invisible furni tools">
+                                 <styleClass>
+                                    <String fx:value="softer" />
+                                    <String fx:value="themed-background" />
+                                 </styleClass></Label>
                               <CheckBox fx:id="ift_pizza_cbx" disable="true" layoutX="12.0" layoutY="12.0" mnemonicParsing="false" onAction="#tbones_tgl" prefHeight="53.0" prefWidth="171.0" text="Display invisible furni as other furniture" textFill="#000000d6" wrapText="true" />
                            </children>
                         </AnchorPane>
@@ -66,7 +83,7 @@
               <content>
                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <AnchorPane layoutX="14.0" layoutY="13.0" prefHeight="129.0" prefWidth="166.0" style="-fx-background-color: #f2f2f2; -fx-background-radius: 5px; -fx-border-color: #ccc; -fx-border-radius: 5px;">
+                        <AnchorPane layoutX="14.0" layoutY="13.0" prefHeight="129.0" prefWidth="166.0" style="-fx-background-radius: 5px; -fx-border-color: #ccc; -fx-border-radius: 5px;" styleClass="themed-background2">
                            <children>
                               <RadioButton fx:id="rd_fm_mode_tile" layoutX="9.0" layoutY="32.0" mnemonicParsing="false" onAction="#onChangeMovementMode" text="Tile" textFill="#000000d6">
                                  <toggleGroup>
@@ -79,7 +96,7 @@
                               <RadioButton fx:id="rd_fm_mode_auto" layoutX="9.0" layoutY="53.0" mnemonicParsing="false" onAction="#onChangeMovementMode" text="Auto" textFill="#000000d6" toggleGroup="$mv_mode_tgl" />
                            </children>
                         </AnchorPane>
-                        <AnchorPane layoutX="196.0" layoutY="13.0" prefHeight="129.0" prefWidth="218.0" style="-fx-background-color: #f2f2f2; -fx-background-radius: 5px; -fx-border-color: #ccc; -fx-border-radius: 5px;">
+                        <AnchorPane layoutX="196.0" layoutY="13.0" prefHeight="129.0" prefWidth="218.0" style="-fx-background-radius: 5px; -fx-border-color: #ccc; -fx-border-radius: 5px;" styleClass="themed-background2">
                            <children>
                               <CheckBox fx:id="fm_cbx_usestacktile" disable="true" layoutX="8.0" layoutY="6.0" mnemonicParsing="false" onAction="#updateUI" selected="true" text="Use stacktile" textFill="#000000d6" />
                               <Spinner fx:id="height_offset_spinner" disable="true" editable="true" layoutX="102.0" layoutY="31.0" prefHeight="25.0" prefWidth="83.0">
@@ -126,7 +143,7 @@
               <content>
                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <AnchorPane layoutX="18.0" layoutY="11.0" prefHeight="158.0" prefWidth="156.0" style="-fx-background-color: #f2f2f2; -fx-border-color: #ccc; -fx-background-radius: 5px; -fx-border-radius: 5px;">
+                        <AnchorPane layoutX="18.0" layoutY="11.0" prefHeight="158.0" prefWidth="156.0" style="-fx-border-color: #ccc; -fx-background-radius: 5px; -fx-border-radius: 5px;" styleClass="themed-background2">
                            <children>
                               <Button fx:id="pm_loc_up_btn" disable="true" layoutX="89.0" layoutY="43.0" mnemonicParsing="false" onAction="#pm_loc_up_click" prefHeight="25.0" prefWidth="42.0" rotate="150.0" text="⟵" />
                               <Button fx:id="pm_loc_right_btn" disable="true" layoutX="89.0" layoutY="87.0" mnemonicParsing="false" onAction="#pm_loc_right_click" prefHeight="25.0" prefWidth="42.0" rotate="-150.0" text="⟵" />
@@ -143,7 +160,7 @@
                               <Label layoutX="11.0" layoutY="9.0" prefHeight="17.0" prefWidth="65.0" text="Location:" textFill="#000000db" />
                            </children>
                         </AnchorPane>
-                        <AnchorPane layoutX="197.0" layoutY="11.0" prefHeight="158.0" prefWidth="156.0" style="-fx-background-color: #f2f2f2; -fx-border-color: #ccc; -fx-background-radius: 5px; -fx-border-radius: 5px;">
+                        <AnchorPane layoutX="197.0" layoutY="11.0" prefHeight="158.0" prefWidth="156.0" style="-fx-border-color: #ccc; -fx-background-radius: 5px; -fx-border-radius: 5px;" styleClass="themed-background2">
                            <children>
                               <Button fx:id="pm_offset_up_btn" disable="true" layoutX="59.0" layoutY="36.0" mnemonicParsing="false" onAction="#pm_offset_up_click" prefHeight="25.0" prefWidth="32.0" rotate="135.0" text="∟" />
                               <Button fx:id="pm_offset_right_btn" disable="true" layoutX="86.0" layoutY="63.0" mnemonicParsing="false" onAction="#pm_offset_right_click" prefHeight="25.0" prefWidth="32.0" rotate="225.0" text="∟" />
@@ -188,13 +205,21 @@
                      <children>
                         <AnchorPane layoutX="14.0" layoutY="106.0" prefHeight="62.0" prefWidth="204.0" style="-fx-border-color: grey; -fx-border-radius: 3px;">
                            <children>
-                              <Label layoutX="52.0" layoutY="-8.0" style="-fx-background-color: white;" text="Black hole stacking" />
+                              <Label layoutX="52.0" layoutY="-8.0" text="Black hole stacking">
+                                 <styleClass>
+                                    <String fx:value="softer" />
+                                    <String fx:value="themed-background" />
+                                 </styleClass></Label>
                               <CheckBox fx:id="replace_bh_cbx" disable="true" layoutX="12.0" layoutY="10.0" mnemonicParsing="false" onAction="#replaceBlackHolesClick" prefHeight="48.0" prefWidth="179.0" text="Replace black holes with USVA" textFill="#000000d6" wrapText="true" />
                            </children>
                         </AnchorPane>
                         <AnchorPane layoutX="14.0" layoutY="14.0" prefHeight="77.0" prefWidth="204.0" style="-fx-border-color: grey; -fx-border-radius: 3px;">
                            <children>
-                              <Label layoutX="75.0" layoutY="-8.0" style="-fx-background-color: white;" text="Hide Furni" />
+                              <Label layoutX="75.0" layoutY="-8.0" text="Hide Furni">
+                                 <styleClass>
+                                    <String fx:value="softer" />
+                                    <String fx:value="themed-background" />
+                                 </styleClass></Label>
                               <CheckBox fx:id="pickup_hide_cbx" disable="true" layoutX="12.0" layoutY="9.0" mnemonicParsing="false" onAction="#replaceBlackHolesClick" prefHeight="27.0" prefWidth="179.0" text="Hide furni by picking up" textFill="#000000d6" wrapText="true" />
                               <Button fx:id="makevisibleBtn" disable="true" layoutX="12.0" layoutY="37.0" mnemonicParsing="false" onAction="#makeVisibleClick" text="Make furni visible again" />
                            </children>

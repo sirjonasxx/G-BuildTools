@@ -1,0 +1,15 @@
+.g-light .lblred {
+    -fx-text-fill: red;
+}
+
+.g-dark .lblred {
+    -fx-text-fill: #ff6464;
+}
+
+.g-light .lblgreen {
+    -fx-text-fill: #4f9d00;
+}
+
+.g-dark .lblgreen {
+    -fx-text-fill: #b9ff52;
+}

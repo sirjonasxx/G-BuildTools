@@ -346,7 +346,7 @@ public class FloorState {
 
 
     public void addTypeIdMapper(FurniDataTools furniDataTools, String furniNameOld, String furniNameNew) {
-        if (furniDataTools.isReady()) {
+        if (furniDataTools != null && furniDataTools.isReady()) {
             int typeIdOld = furniDataTools.getFloorTypeId(furniNameOld);
             int typeIdNew = furniDataTools.getFloorTypeId(furniNameNew);
             addTypeIdMapper(typeIdOld, typeIdNew);
@@ -360,7 +360,7 @@ public class FloorState {
     }
 
     public void removeTypeIdMapper(FurniDataTools furniDataTools, String furniName) {
-        if (furniDataTools.isReady()) {
+        if (furniDataTools != null && furniDataTools.isReady()) {
             int typeId = furniDataTools.getFloorTypeId(furniName);
             removeTypeIdMapper(typeId);
         }
