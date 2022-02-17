@@ -10,7 +10,7 @@ public class GBuildToolsLauncher extends ThemedExtensionFormCreator {
 
     @Override
     protected String getTitle() {
-        return "G-BuildTools 2.0";
+        return "G-BuildTools 2.0.1";
     }
 
     @Override

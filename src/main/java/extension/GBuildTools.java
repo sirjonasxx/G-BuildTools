@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @ExtensionInfo(
         Title =  "G-BuildTools",
         Description =  "For all your building needs",
-        Version =  "2.0",
+        Version =  "2.0.1",
         Author =  "sirjonasxx"
 )
 public class GBuildTools extends ExtensionForm {

@@ -4,9 +4,9 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="extension.GBuildTools">
+<AnchorPane prefHeight="257.0" prefWidth="544.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="extension.GBuildTools">
    <children>
-      <AnchorPane layoutY="216.0" prefHeight="37.0" prefWidth="543.0" styleClass="themed-background2">
+      <AnchorPane layoutY="216.0" prefHeight="41.0" prefWidth="543.0" style="-fx-background-radius: 0 0 10 10;" styleClass="themed-background2">
          <children>
             <CheckBox fx:id="enable_gbuildtools" layoutX="14.0" layoutY="8.0" mnemonicParsing="false" onAction="#enable_tgl" text="Enable G-BuildTools" />
             <Label fx:id="room_found_lbl" layoutX="169.0" layoutY="11.0" styleClass="lblred" text="No room found" />
@@ -14,7 +14,7 @@
             <Label fx:id="stack_tile_lbl" layoutX="416.0" layoutY="11.0" styleClass="lblred" text="No stack tile found" />
          </children>
       </AnchorPane>
-      <TabPane layoutX="-1.0" prefHeight="211.0" prefWidth="544.0" tabClosingPolicy="UNAVAILABLE">
+      <TabPane prefHeight="211.0" prefWidth="544.0" tabClosingPolicy="UNAVAILABLE">
         <tabs>
           <Tab text="General">
             <content>
