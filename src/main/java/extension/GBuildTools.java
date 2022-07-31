@@ -111,6 +111,10 @@ public class GBuildTools extends ExtensionForm {
     public CheckBox pickup_hide_cbx;
     public Button makevisibleBtn;
 
+    // illusion assist
+    public CheckBox flatten_floor_cbx;
+    public CheckBox translate_z_cbx;
+
     private static final int ratelimitStartOffset = 15;
 
 
@@ -321,6 +325,9 @@ public class GBuildTools extends ExtensionForm {
             pickup_hide_cbx.setDisable(!buildToolsEnabled()); // make sure you're not gonna pick up furni if gbuildtools not enabled
             makevisibleBtn.setDisable(!floorState.hasHiddenFurni());
 
+            // illusion assist
+            flatten_floor_cbx.setDisable(!buildToolsEnabled());
+            translate_z_cbx.setDisable(!buildToolsEnabled());
         });
     }
 
