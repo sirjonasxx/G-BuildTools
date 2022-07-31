@@ -22,6 +22,8 @@ import utils.Wrapper;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import component.IllusionAssistComponent;
+
 @ExtensionInfo(
         Title =  "G-BuildTools",
         Description =  "For all your building needs",
@@ -150,8 +152,8 @@ public class GBuildTools extends ExtensionForm {
     // invis furni & black hole
     private volatile long latestReq = -1;
 
-
-
+    // illusion assist
+    private IllusionAssistComponent illusionAssist;
 
 
     public void onRotatedFurniClick(ActionEvent actionEvent) {
@@ -401,6 +403,11 @@ public class GBuildTools extends ExtensionForm {
 
         // hide furni
         intercept(HMessage.Direction.TOSERVER, "PickupObject", this::onPickUpItem);
+
+        // illusion assist
+        illusionAssist = new IllusionAssistComponent(this, floorState);
+        illusionAssist.flattenFloorEnabledProperty().bind(flatten_floor_cbx.selectedProperty());
+        illusionAssist.translateEnabledProperty().bind(translate_z_cbx.selectedProperty());
 
         floorState.requestRoom(this);
 
