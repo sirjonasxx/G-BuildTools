@@ -206,7 +206,7 @@ public class GBuildTools extends ExtensionForm {
         primaryStage.sizeToScene();
     }
 
-    private boolean buildToolsEnabled() {
+    public boolean buildToolsEnabled() {
         return enable_gbuildtools.isSelected();
     }
     public boolean furniDataReady() {
