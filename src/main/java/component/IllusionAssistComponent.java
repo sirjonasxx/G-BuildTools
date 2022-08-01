@@ -134,13 +134,15 @@ public class IllusionAssistComponent {
     }
 
     private float translateZ(int x, int y, float z) {
-        if (floorplan == null)
-            return z;
+        synchronized (lock) {
+            if (floorplan == null)
+                return z;
 
-        if (x < 0 || y < 0 || x >= roomWidth || y >= roomLength)
-            return 0;
+            if (x < 0 || y < 0 || x >= roomWidth || y >= roomLength)
+                return 0;
 
-        return z - floorplan[y][x];
+            return z - floorplan[y][x];
+        }
     }
 
     private float replaceZ(HPacket packet, int x, int y) {
@@ -164,22 +166,21 @@ public class IllusionAssistComponent {
     private void onHeightMap(HMessage hMessage) {
         flattenFloorActive = extension.buildToolsEnabled() && flattenFloorEnabled.get();
 
-        synchronized (lock) {
-            entityMap.clear();
-            itemMap.clear();
-        }
-
         hMessage.setBlocked(flattenFloorActive);
-
         HPacket packet = hMessage.getPacket();
         roomWidth = packet.readInteger();
         int tiles = packet.readInteger();
         roomLength = tiles / roomWidth;
 
-        heightmap = new short[roomLength][roomWidth];
-        for (int y = 0; y < roomLength; y++) {
-            for (int x = 0; x < roomWidth; x++) {
-                heightmap[y][x] = packet.readShort();
+        synchronized (lock) {
+            entityMap.clear();
+            itemMap.clear();
+
+            heightmap = new short[roomLength][roomWidth];
+            for (int y = 0; y < roomLength; y++) {
+                for (int x = 0; x < roomWidth; x++) {
+                    heightmap[y][x] = packet.readShort();
+                }
             }
         }
     }
@@ -193,17 +194,19 @@ public class IllusionAssistComponent {
         String map = packet.readString();
         String[] rows = map.split("\r");
 
-        floorplan = new int[rows.length][rows[0].length()];
-        for (int y = 0; y < roomLength; y++) {
-            for (int x = 0; x < roomWidth; x++) {
-                char c = Character.toLowerCase(rows[y].charAt(x));
-                int height = -1;
-                if ('0' <= c && c <= '9') {
-                    height = c - '0';
-                } else if ('a' <= c && c <= 'z' && c != x) {
-                    height = 10 + (c - 'a');
+        synchronized (lock) {
+            floorplan = new int[rows.length][rows[0].length()];
+            for (int y = 0; y < roomLength; y++) {
+                for (int x = 0; x < roomWidth; x++) {
+                    char c = Character.toLowerCase(rows[y].charAt(x));
+                    int height = -1;
+                    if ('0' <= c && c <= '9') {
+                        height = c - '0';
+                    } else if ('a' <= c && c <= 'z' && c != x) {
+                        height = 10 + (c - 'a');
+                    }
+                    floorplan[y][x] = height;
                 }
-                floorplan[y][x] = height;
             }
         }
 
