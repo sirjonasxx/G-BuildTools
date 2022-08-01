@@ -232,7 +232,7 @@
                                     <String fx:value="themed-background" />
                                  </styleClass>
                               </Label>
-                              <CheckBox fx:id="flatten_floor_cbx" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" onAction="#flattenFloorClick" text="Flatten floor plan" textFill="#000000d6" wrapText="true" />
+                              <CheckBox fx:id="flatten_floor_cbx" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" text="Flatten floor plan" textFill="#000000d6" wrapText="true" />
                               <CheckBox fx:id="translate_z_cbx" layoutX="14.0" layoutY="39.0" mnemonicParsing="false" text="Translate entity positions" />
                            </children>
                         </AnchorPane>
