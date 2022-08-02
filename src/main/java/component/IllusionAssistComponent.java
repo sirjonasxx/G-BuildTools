@@ -119,6 +119,34 @@ public class IllusionAssistComponent {
                 extension.sendToClient(packet);
             }
         }
+
+        // adjust heightmap
+        List<HeightmapDiff> diffs = new ArrayList<>();
+        for (int y = 0; y < roomLength; y++) {
+            for (int x = 0; x < roomWidth; x++) {
+                int h = getFloorHeight(x, y);
+                if (h <= 0) continue;
+                short value = getHeightmapValue(x, y);
+                if (translate)
+                    value = translateHeightmapValue(x, y, value);
+                diffs.add(new HeightmapDiff(x, y, value));
+            }
+        }
+
+        int chunkSize = Byte.MAX_VALUE;
+        int chunks = (int)Math.ceil(diffs.size() / (double)chunkSize);
+        for (int i = 0; i < chunks; i++) {
+            int size = Math.min(chunkSize, diffs.size() - i * chunkSize);
+            HPacket packet = new HPacket("HeightMapUpdate", HMessage.Direction.TOCLIENT);
+            packet.appendByte((byte) size);
+            for (int j = 0; j < size; j++) {
+                HeightmapDiff diff = diffs.get(i * chunkSize + j);
+                packet.appendByte((byte)diff.x);
+                packet.appendByte((byte)diff.y);
+                packet.appendShort(diff.value);
+            }
+            extension.sendToClient(packet);
+        }
     }
 
     private void onConnect(String s, int i, String s1, String s2, HClient hClient) {
@@ -133,17 +161,29 @@ public class IllusionAssistComponent {
         extension.intercept(HMessage.Direction.TOCLIENT, "UserUpdate", this::onUserUpdate);
     }
 
-    private float translateZ(int x, int y, float z) {
+    private int getFloorHeight(int x, int y) {
         synchronized (lock) {
-            if (floorplan == null)
-                return z;
-
-            if (x < 0 || y < 0 || x >= roomWidth || y >= roomLength)
+            if (floorplan == null ||
+                    x < 0 || y < 0 ||
+                    x >= roomWidth || y >= roomLength) {
                 return 0;
-
-            return z - floorplan[y][x];
+            }
+            return Math.max(0, floorplan[y][x]);
         }
     }
+
+    private short getHeightmapValue(int x, int y) {
+        synchronized (lock) {
+            if (heightmap == null ||
+                    x < 0 || y < 0 ||
+                    x >= roomWidth || x >= roomLength) {
+                return 0x4000;
+            }
+            return heightmap[y][x];
+        }
+    }
+
+    private float translateZ(int x, int y, float z) { return (z - getFloorHeight(x, y)); }
 
     private float replaceZ(HPacket packet, int x, int y) {
         int index = packet.getReadIndex();
@@ -155,7 +195,7 @@ public class IllusionAssistComponent {
         return z;
     }
 
-    private short translateHeightmapZ(int x, int y, short value) {
+    private short translateHeightmapValue(int x, int y, short value) {
         float height = (value & 0x3FFF) / 256.0f;
         height = translateZ(x, y, height);
         value &= 0xC000;
@@ -217,7 +257,7 @@ public class IllusionAssistComponent {
         translatedHeightmap.appendInt(roomWidth * roomLength);
         for (int y = 0; y < roomLength; y++) {
             for (int x = 0; x < roomWidth; x++) {
-                short value = translateHeightmapZ(x, y, heightmap[y][x]);
+                short value = translateHeightmapValue(x, y, heightmap[y][x]);
                 translatedHeightmap.appendShort(value);
             }
         }
@@ -243,7 +283,7 @@ public class IllusionAssistComponent {
             short value = packet.readShort();
             heightmap[y][x] = value;
             if (translate) {
-                value = translateHeightmapZ(x, y, value);
+                value = translateHeightmapValue(x, y, value);
                 packet.replaceShort(packet.getReadIndex() - 2, value);
             }
         }
@@ -442,6 +482,16 @@ public class IllusionAssistComponent {
             this.x = x;
             this.y = y;
             this.z = z;
+        }
+    }
+
+    static class HeightmapDiff {
+        public int x, y;
+        public short value;
+        public HeightmapDiff(int x, int y, short value) {
+            this.x = x;
+            this.y = y;
+            this.value = value;
         }
     }
 }
