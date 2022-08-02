@@ -69,6 +69,9 @@ public class IllusionAssistComponent {
 
         for (int y = 0; y < roomLength; y++) {
             for (int x = 0; x < roomWidth; x++) {
+                int h = getFloorHeight(x, y);
+                if (h <= 0) continue;
+
                 Pair<Integer, Integer> xy = new Pair<>(x, y);
                 if (!map.containsKey(xy)) continue;
 
@@ -82,7 +85,7 @@ public class IllusionAssistComponent {
                     packet.appendInt(item.identifier);
 
                     float fromZ = item.z;
-                    float toZ = translateZ(item.x, item.y, fromZ);
+                    float toZ = item.z - h;
 
                     if (!translate) {
                         float tmp = fromZ;
@@ -100,6 +103,8 @@ public class IllusionAssistComponent {
 
         synchronized (lock) {
             for (EntityLocation e : entityMap.values()) {
+                int h = getFloorHeight(e.x, e.y);
+                if (h <= 0) continue;
                 HPacket packet = new HPacket("SlideObjectBundle", HMessage.Direction.TOCLIENT);
                 packet.appendInt(e.x); packet.appendInt(e.y);
                 packet.appendInt(e.x); packet.appendInt(e.y);
@@ -108,7 +113,7 @@ public class IllusionAssistComponent {
                 packet.appendInt(2);
                 packet.appendInt(e.identifier);
                 float fromZ = e.z;
-                float toZ = translateZ(e.x, e.y, fromZ);
+                float toZ = e.z - h;
                 if (!translate) {
                     float tmp = fromZ;
                     fromZ = toZ;
