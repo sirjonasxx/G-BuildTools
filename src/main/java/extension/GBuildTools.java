@@ -10,7 +10,6 @@ import gearth.protocol.HPacket;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
-import javafx.scene.paint.Paint;
 import room.FloorState;
 import room.StackTileInfo;
 import room.StackTileSetting;
@@ -115,7 +114,7 @@ public class GBuildTools extends ExtensionForm {
 
     // illusion assist
     public CheckBox flatten_floor_cbx;
-    public CheckBox translate_z_cbx;
+    public CheckBox translate_heights_cbx;
 
     private static final int ratelimitStartOffset = 15;
 
@@ -329,7 +328,7 @@ public class GBuildTools extends ExtensionForm {
 
             // illusion assist
             flatten_floor_cbx.setDisable(!buildToolsEnabled());
-            translate_z_cbx.setDisable(!buildToolsEnabled());
+            translate_heights_cbx.setDisable(!buildToolsEnabled());
         });
     }
 
@@ -407,7 +406,7 @@ public class GBuildTools extends ExtensionForm {
         // illusion assist
         illusionAssist = new IllusionAssistComponent(this);
         illusionAssist.flattenFloorEnabledProperty().bind(flatten_floor_cbx.selectedProperty());
-        illusionAssist.translateEnabledProperty().bind(translate_z_cbx.selectedProperty());
+        illusionAssist.translateEnabledProperty().bind(translate_heights_cbx.selectedProperty());
 
         floorState.requestRoom(this);
 
