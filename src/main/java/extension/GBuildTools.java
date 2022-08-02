@@ -571,7 +571,7 @@ public class GBuildTools extends ExtensionForm {
             delayedFloorFurniDrop.add(dropInfo);
         }
 
-        double height = floorState.getTileHeight(dropInfo.getX(), dropInfo.getY());
+        double height = illusionAssist.getTranslatedHeightmapHeight(dropInfo.getX(), dropInfo.getY());
 
         if (override_rotation_cbx.isSelected()) {
             dropInfo.setRotation(override_rotation_spinner.getValue());

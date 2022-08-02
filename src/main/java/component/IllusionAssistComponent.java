@@ -188,6 +188,15 @@ public class IllusionAssistComponent {
         }
     }
 
+    public float getTranslatedHeightmapHeight(int x, int y) {
+        synchronized (lock) {
+            float height = (getHeightmapValue(x, y) & 0x3FFF) / 256.0f;
+            if (flattenFloorActive && translateEnabled.get())
+                height -= getFloorHeight(x, y);
+            return height;
+        }
+    }
+
     private float translateZ(int x, int y, float z) { return (z - getFloorHeight(x, y)); }
 
     private float replaceZ(HPacket packet, int x, int y) {
