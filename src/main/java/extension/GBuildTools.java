@@ -405,7 +405,7 @@ public class GBuildTools extends ExtensionForm {
         intercept(HMessage.Direction.TOSERVER, "PickupObject", this::onPickUpItem);
 
         // illusion assist
-        illusionAssist = new IllusionAssistComponent(this, floorState);
+        illusionAssist = new IllusionAssistComponent(this);
         illusionAssist.flattenFloorEnabledProperty().bind(flatten_floor_cbx.selectedProperty());
         illusionAssist.translateEnabledProperty().bind(translate_z_cbx.selectedProperty());
 

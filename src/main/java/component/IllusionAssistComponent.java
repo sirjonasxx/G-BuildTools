@@ -23,7 +23,6 @@ public class IllusionAssistComponent {
     private final Object lock = new Object();
 
     private final GBuildTools extension;
-    private final FloorState floorState;
 
     private final BooleanProperty flattenFloorEnabled = new SimpleBooleanProperty();
     private final BooleanProperty translateEnabled = new SimpleBooleanProperty();
@@ -37,9 +36,8 @@ public class IllusionAssistComponent {
     private final Map<Integer, EntityLocation> entityMap = new HashMap<>();
     private final Map<Integer, EntityLocation> itemMap = new HashMap<>();
 
-    public IllusionAssistComponent(GBuildTools extension, FloorState floorState) {
+    public IllusionAssistComponent(GBuildTools extension) {
         this.extension = extension;
-        this.floorState = floorState;
 
         translateEnabled.addListener(this::onTranslateEnabledChanged);
 
