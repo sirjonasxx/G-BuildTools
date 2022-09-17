@@ -745,9 +745,10 @@ public class GBuildTools extends ExtensionForm {
     private void setStackHeight(HMessage hMessage) {
         if (buildToolsEnabled() && st_allstacktile_cbx.isSelected() && furniDataReady() && floorState.inRoom()) {
             List<HFloorItem> allStackTiles = new ArrayList<>();
-            allStackTiles.addAll(floorState.getItemsFromType(furniDataTools, "tile_stackmagic2"));
-            allStackTiles.addAll(floorState.getItemsFromType(furniDataTools, "tile_stackmagic1"));
-            allStackTiles.addAll(floorState.getItemsFromType(furniDataTools, "tile_stackmagic"));
+
+            for (StackTileSetting stackTile : StackTileSetting.values()) {
+                allStackTiles.addAll(floorState.getItemsFromType(furniDataTools, stackTile.getClassName()));
+            }
 
             if (allStackTiles.size() > 1) {
                 hMessage.setBlocked(true);
@@ -961,9 +962,9 @@ public class GBuildTools extends ExtensionForm {
 
         Set<Integer> stacktiles = new HashSet<>();
         if (furniDataReady()) {
-            stacktiles.add(furniDataTools.getFloorTypeId("tile_stackmagic"));
-            stacktiles.add(furniDataTools.getFloorTypeId("tile_stackmagic1"));
-            stacktiles.add(furniDataTools.getFloorTypeId("tile_stackmagic2"));
+            for (StackTileSetting stackTile : StackTileSetting.values()) {
+                stacktiles.add(furniDataTools.getFloorTypeId(stackTile.getClassName()));
+            }
         }
 
         // convert
