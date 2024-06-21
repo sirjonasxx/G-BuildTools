@@ -10,7 +10,6 @@ import gearth.protocol.HPacket;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
-import javafx.scene.paint.Paint;
 import room.FloorState;
 import room.StackTileInfo;
 import room.StackTileSetting;
@@ -21,6 +20,8 @@ import utils.Wrapper;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import component.IllusionAssistComponent;
 
 @ExtensionInfo(
         Title =  "G-BuildTools",
@@ -111,6 +112,10 @@ public class GBuildTools extends ExtensionForm {
     public CheckBox pickup_hide_cbx;
     public Button makevisibleBtn;
 
+    // illusion assist
+    public CheckBox flatten_floor_cbx;
+    public CheckBox translate_heights_cbx;
+
     private static final int ratelimitStartOffset = 15;
 
 
@@ -146,8 +151,8 @@ public class GBuildTools extends ExtensionForm {
     // invis furni & black hole
     private volatile long latestReq = -1;
 
-
-
+    // illusion assist
+    private IllusionAssistComponent illusionAssist;
 
 
     public void onRotatedFurniClick(ActionEvent actionEvent) {
@@ -206,7 +211,7 @@ public class GBuildTools extends ExtensionForm {
         primaryStage.sizeToScene();
     }
 
-    private boolean buildToolsEnabled() {
+    public boolean buildToolsEnabled() {
         return enable_gbuildtools.isSelected();
     }
     public boolean furniDataReady() {
@@ -321,6 +326,9 @@ public class GBuildTools extends ExtensionForm {
             pickup_hide_cbx.setDisable(!buildToolsEnabled()); // make sure you're not gonna pick up furni if gbuildtools not enabled
             makevisibleBtn.setDisable(!floorState.hasHiddenFurni());
 
+            // illusion assist
+            flatten_floor_cbx.setDisable(!buildToolsEnabled());
+            translate_heights_cbx.setDisable(!buildToolsEnabled());
         });
     }
 
@@ -394,6 +402,11 @@ public class GBuildTools extends ExtensionForm {
 
         // hide furni
         intercept(HMessage.Direction.TOSERVER, "PickupObject", this::onPickUpItem);
+
+        // illusion assist
+        illusionAssist = new IllusionAssistComponent(this);
+        illusionAssist.flattenFloorEnabledProperty().bind(flatten_floor_cbx.selectedProperty());
+        illusionAssist.translateEnabledProperty().bind(translate_heights_cbx.selectedProperty());
 
         floorState.requestRoom(this);
 
@@ -557,7 +570,7 @@ public class GBuildTools extends ExtensionForm {
             delayedFloorFurniDrop.add(dropInfo);
         }
 
-        double height = floorState.getTileHeight(dropInfo.getX(), dropInfo.getY());
+        double height = illusionAssist.getTranslatedHeightmapHeight(dropInfo.getX(), dropInfo.getY());
 
         if (override_rotation_cbx.isSelected()) {
             dropInfo.setRotation(override_rotation_spinner.getValue());
