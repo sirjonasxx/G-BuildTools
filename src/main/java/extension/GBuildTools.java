@@ -202,7 +202,7 @@ public class GBuildTools extends ExtensionForm {
     private volatile boolean updateLocationStringUI = false;
 
     @Override
-    protected void onShow() {
+    public void onShow() {
         primaryStage.sizeToScene();
     }
 
@@ -325,7 +325,7 @@ public class GBuildTools extends ExtensionForm {
     }
 
     @Override
-    protected void initExtension() {
+    public void initExtension() {
         moveHistory.add(new LinkedList<>());
         readmeLink.setTooltip(new Tooltip("https://github.com/sirjonasxx/G-BuildTools/blob/master/README.md"));
         readmeLink.setOnAction((ActionEvent event) -> {
@@ -424,7 +424,7 @@ public class GBuildTools extends ExtensionForm {
     }
 
     @Override
-    protected void onEndConnection() {
+    public void onEndConnection() {
         reset();
 
         furniDataTools = null;
