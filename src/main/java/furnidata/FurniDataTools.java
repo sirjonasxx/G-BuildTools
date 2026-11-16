@@ -1,12 +1,11 @@
 package furnidata;
 
 import javafx.beans.InvalidationListener;
-import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -60,8 +59,8 @@ public class FurniDataTools {
     }
 
     private void fetch(InvalidationListener onLoad) throws IOException {
-        JSONObject object = new JSONObject(IOUtils.toString(
-                new URL(furnidataUrl()).openStream(), StandardCharsets.UTF_8));
+        JSONObject object = new JSONObject(new String(
+                URI.create(furnidataUrl()).toURL().openStream().readAllBytes(), StandardCharsets.UTF_8));
 
 
         JSONArray floorJson = object.getJSONObject("roomitemtypes").getJSONArray("furnitype");

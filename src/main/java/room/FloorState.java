@@ -38,6 +38,7 @@ public class FloorState {
         extension.intercept(HMessage.Direction.TOCLIENT, "ObjectRemove", this::onObjectRemove);
         extension.intercept(HMessage.Direction.TOCLIENT, "ObjectUpdate", this::onObjectUpdate);
         extension.intercept(HMessage.Direction.TOCLIENT, "SlideObjectBundle", this::onObjectMove);
+        extension.intercept(HMessage.Direction.TOCLIENT, "WiredMovements", this::onWiredMovements);
 
         extension.intercept(HMessage.Direction.TOCLIENT, "HeightMap", this::parseHeightmap);
         extension.intercept(HMessage.Direction.TOCLIENT, "HeightMapUpdate", this::heightmapUpdate);
@@ -267,16 +268,73 @@ public class FloorState {
                     String oldz = packet.readString();
                     String newz = packet.readString();
 
-                    HFloorItem item = furniIdToItem.get(furniId);
-                    if (item != null) {
-                        furnimap.get(item.getTile().getX()).get(item.getTile().getY()).remove(item.getId());
-                        item.setTile(new HPoint(newx, newy, Double.parseDouble(newz)));
-                        furnimap.get(newx).get(newy).put(item.getId(), item);
-                    }
+                    updateFurniPosition(furniId, newx, newy, newz);
                 }
             }
 
 //            int roller = packet.readInteger();
+        }
+    }
+
+    private void updateFurniPosition(int furniId, int newx, int newy, String newz) {
+        HFloorItem item = furniIdToItem.get(furniId);
+        if (item != null) {
+            furnimap.get(item.getTile().getX()).get(item.getTile().getY()).remove(item.getId());
+            item.setTile(new HPoint(newx, newy, Double.parseDouble(newz)));
+            furnimap.get(newx).get(newy).put(item.getId(), item);
+        }
+    }
+
+    private void onWiredMovements(HMessage hMessage) {
+        if (!inRoom()) return;
+
+        HPacket packet = hMessage.getPacket();
+        boolean moved = false;
+
+        synchronized (lock) {
+            int amount = packet.readInteger();
+            for (int i = 0; i < amount; i++) {
+                switch (packet.readInteger()) {
+                    case 0: // user move: source x/y, target x/y, source z, target z, user index,
+                            // is slide, animation time, body direction, head direction (+ jump power)
+                        packet.skip("iiiissiiiii");
+                        if (packet.readBoolean()) {
+                            packet.skip("i");
+                        }
+                        break;
+                    case 1: // floor item move: source x/y, target x/y, source z, target z, furni id,
+                            // animation time, rotation (+ overshoot distance, + curve strength)
+                        packet.skip("ii");
+                        int newx = packet.readInteger();
+                        int newy = packet.readInteger();
+                        packet.skip("s");
+                        String newz = packet.readString();
+                        int furniId = packet.readInteger();
+                        packet.skip("ii");
+                        if (packet.readBoolean()) {
+                            packet.skip("i");
+                        }
+                        if (packet.readBoolean()) {
+                            packet.skip("i");
+                        }
+                        updateFurniPosition(furniId, newx, newy, newz);
+                        moved = true;
+                        break;
+                    case 2: // wall item move, no wall furni state is tracked
+                        packet.skip("iBiiiiiiiii");
+                        break;
+                    case 3: // user direction update: user index, body direction, head direction
+                        packet.skip("iii");
+                        break;
+                    default:
+                        // unknown movement type, the remaining bytes can't be interpreted
+                        return;
+                }
+            }
+        }
+
+        if (moved) {
+            onFurnisChange.invalidated(null);
         }
     }
 
